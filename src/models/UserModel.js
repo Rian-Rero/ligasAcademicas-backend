@@ -28,15 +28,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    isAdmin: {
-      type: Boolean,
-      required: false,
-      default: false, // False means user is a normal user (not admin)
-    },
-    role: {
+    globalRole: {
       type: String,
       required: false,
-      default: 'user',
+      default: 'league-member',
     },
     emailVerified: {
       type: Boolean,

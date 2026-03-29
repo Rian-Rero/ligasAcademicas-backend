@@ -34,4 +34,12 @@ export const COLLECTION_NAMES = {
   USER: 'users',
   USER_SESSION_TOKEN: 'usersessiontokens',
   USER_PWD_TOKEN: 'userpwdtokens',
+  UNIVERSITY: 'universities',
+  ACADEMIC_LEAGUE: 'academicleagues',
+  SQUAD: 'squads',
+  LEAGUE_MEMBERSHIP: 'leaguememberships',
+  EVENT: 'events',
+  ATTENDANCE: 'attendances',
+  CERTIFICATE: 'certificates',
+  ROLE_HISTORY: 'rolehistories',
 };
