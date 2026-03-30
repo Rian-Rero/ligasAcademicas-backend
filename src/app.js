@@ -23,7 +23,7 @@ app.use(helmet());
 if (isDevEnvironment) app.use(morgan('dev'));
 
 // Routes
-app.use('/sga-api', routes);
+app.use('/sgla-api', routes);
 
 // Non existing routes
 app.use(/.*/, (req, res, next) => {
