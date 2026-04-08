@@ -7,7 +7,7 @@ export const arrayLimit = (limit) => ({
 
 export const emptyArray = {
   validator: (arr) => arr.length,
-  message: '{PATH} property cannot be a empty array',
+  message: '{PATH} property cannot be an empty array',
 };
 
 export const positiveInteger = {
@@ -18,5 +18,5 @@ export const positiveInteger = {
 export const existingRef = (collectionName) => ({
   validator: async (refId) =>
     mongoose.model(collectionName).findById(refId).lean().exec(),
-  message: '{{PATH}} not found',
+  message: '{PATH} not found',
 });

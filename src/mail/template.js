@@ -43,7 +43,7 @@ const template = (body) => html`
         }
         h2 {
           font-size: 15px;
-          font-weight: 400px;
+          font-weight: 400;
         }
       </style>
     </head>

@@ -7,8 +7,8 @@ export const login = validate(
     body: z.object({
       email: z
         .string({ required_error: 'Email is required' })
-        .email('Must be a valid email'),
-      password: z.string().optional(),
+        .pipe(z.email('Must be a valid email')),
+      password: z.string({ required_error: 'Password is required' }),
     }),
     signedCookies: z.object({
       token: z.string().or(z.boolean()).optional(),

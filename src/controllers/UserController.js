@@ -44,22 +44,6 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   res.status(SUCCESS_CODES.OK).json(updatedUser.name);
 });
 
-export const getUserWithSoftwareAccess = asyncHandler(async (req, res) => {
-  const inputFilters = UserValidator.get(req);
-  const users = await UserService.getUserWithSoftwareAccess(inputFilters);
-
-  res.status(SUCCESS_CODES.OK).json(users);
-});
-
-export const softwareAccess = asyncHandler(async (req, res) => {
-  const { _id, ...inputData } = await UserValidator.softwareAccess(req);
-  const updateSoftwareAcess = await UserService.softwareAccess({
-    _id,
-    inputData,
-  });
-  res.status(SUCCESS_CODES.OK).json(updateSoftwareAcess);
-});
-
 export const update = asyncHandler(async (req, res) => {
   const { _id, ...inputData } = UserValidator.update(req);
   const updatedUser = await UserService.update({ _id, inputData });
