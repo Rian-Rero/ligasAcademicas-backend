@@ -8,8 +8,7 @@ export const get = validate(
     query: z.object({
       _id: objectIdSchema('User _id').optional(),
       name: z.string().optional(),
-      role: z.string().optional(),
-      isAdmin: z.boolean().optional(),
+      globalRole: z.string().optional(),
       emailVerified: z.boolean().optional(),
       email: z.string().optional(),
     }),
@@ -29,19 +28,15 @@ export const create = validate(
     body: z.object({
       name: z
         .string({ required_error: 'User name is required' })
-        .min(3, 'User name must be atleast 3 characters')
+        .min(3, 'User name must be at least 3 characters')
         .max(40, 'User name must be a maximum of 40 characters'),
-      role: z.string().default('user'),
-      isAdmin: z.boolean().default(false),
-      isGoogleUser: z.boolean().default(false),
+      globalRole: z.string().default('league-member'),
       emailVerified: z.boolean().default(false),
-      email: z
-        .string({ required_error: 'User email is required' })
-        .email('User email must be valid'),
+      email: z.email('User email must be valid'),
       password: z
         .string()
-        .min(6, 'User password must be at least 3 characters')
-        .max(16, 'User password must be a maximum of 30 characters')
+        .min(6, 'User password must be at least 6 characters')
+        .max(16, 'User password must be a maximum of 16 characters')
         .optional(),
       imageURL: z.string().optional(),
     }),
@@ -67,7 +62,9 @@ export const forgotPassword = validate(
 export const redefinePassword = validate(
   z.object({
     body: z.object({
-      newPassword: z.string({ required_error: 'Uer new password is required' }),
+      newPassword: z.string({
+        required_error: 'User new password is required',
+      }),
     }),
     params: z.object({
       token: z.string({
@@ -82,13 +79,13 @@ export const update = validate(
     body: z.object({
       name: z
         .string()
-        .min(3, 'User name must be atleast 3 characters')
+        .min(3, 'User name must be at least 3 characters')
         .max(40, 'User name must be a maximum of 40 characters')
         .optional(),
-      role: z
+      globalRole: z
         .string()
-        .min(3, 'User role must be atleast 3 characters')
-        .max(40, 'User role must be a maximum of 40 characters')
+        .min(3, 'User global role must be at least 3 characters')
+        .max(40, 'User global role must be a maximum of 40 characters')
         .optional(),
     }),
     params: z.object({

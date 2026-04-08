@@ -45,9 +45,10 @@ export function redefinePasswordEmail({ user, passwordToken }) {
 
   const mailOptions = {
     to: user.email,
-    subject: `[SGLA] - Confirmação de email`,
+    subject: `[SGLA] - Redefinição de senha`,
     text: `
-    Olá, ${user.name}! Para finalizar a criação da sua conta, favor clicar aqui.
+    Olá, ${user.name}! Para redefinir sua senha, favor acessar o link abaixo:
+    ${`${process.env.FRONTEND_URL}/redefinir-senha/${encodeURIComponent(passwordToken)}`}
     `,
     html: template(body),
   };

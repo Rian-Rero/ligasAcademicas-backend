@@ -5,10 +5,8 @@ import validate from './validate.js';
 export const login = validate(
   z.object({
     body: z.object({
-      email: z
-        .string({ required_error: 'Email is required' })
-        .email('Must be a valid email'),
-      password: z.string().optional(),
+      email: z.email('Must be a valid email'),
+      password: z.string({ required_error: 'Password is required' }),
     }),
     signedCookies: z.object({
       token: z.string().or(z.boolean()).optional(),

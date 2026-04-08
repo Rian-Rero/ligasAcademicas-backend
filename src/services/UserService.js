@@ -74,17 +74,3 @@ export async function redefinePassword({ token, newPassword }) {
 
   return foundUser.set({ password: newPassword }).save();
 }
-
-export async function getUserWithSoftwareAccess(inputFilters) {
-  const date = new Date();
-  return UserModel.find({ softwareAccess: { $gte: date } }, inputFilters)
-    .lean()
-    .exec();
-}
-
-export async function softwareAccess({ _id, inputData }) {
-  const foundUser = await UserModel.findById(_id).exec();
-  if (!foundUser) throw new NotFoundError('User not found');
-
-  return foundUser.set(inputData).save();
-}

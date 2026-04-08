@@ -27,10 +27,6 @@ export async function processLogin({ email, password, token }) {
   // Evaluate if the user activated its account after registration
   if (!foundUser.emailVerified) throw new ForbiddenError('Account inactive');
 
-  const currTime = new Date();
-  foundUser.hasAccessToSoftware =
-    foundUser.softwareAccess >= currTime || foundUser.isAdmin;
-
   // Evaluate token reuse
   if (token) {
     const foundToken = await UserSessionTokenModel.findOne({
@@ -71,7 +67,10 @@ export async function processRefreshToken(token) {
       _id: decoded.userId,
     }).exec();
 
-    await UserSessionTokenModel.deleteMany({ user: hackedUser._id }).exec();
+    if (hackedUser) {
+      await UserSessionTokenModel.deleteMany({ user: hackedUser._id }).exec();
+    }
+
     throw new ForbiddenError('Token reuse');
   }
 
@@ -84,10 +83,6 @@ export async function processRefreshToken(token) {
   const tokenUserData = omitSessionFields(
     foundToken.user.toObject({ virtuals: true }),
   ); // It is necessary to use "toObject" because foundToken is a mongoose document
-
-  const currTime = new Date();
-  tokenUserData.hasAccessToSoftware =
-    tokenUserData.softwareAccess >= currTime || tokenUserData.isAdmin;
 
   // Create JWTs
   const { accessToken, refreshToken } = signSessionJwts(tokenUserData);

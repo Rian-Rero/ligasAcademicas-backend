@@ -37,7 +37,7 @@ export const handleRefreshToken = asyncHandler(async (req, res) => {
 });
 
 export const handleLogout = asyncHandler(async (req, res) => {
-  const { token } = SessionValidator.refresh(req);
+  const { token } = SessionValidator.logout(req);
   if (!token) return res.sendStatus(SUCCESS_CODES.NO_CONTENT); // No content
 
   // Delete refresh token if exists in db
