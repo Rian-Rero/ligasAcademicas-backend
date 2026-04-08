@@ -32,9 +32,7 @@ export const create = validate(
         .max(40, 'User name must be a maximum of 40 characters'),
       globalRole: z.string().default('league-member'),
       emailVerified: z.boolean().default(false),
-      email: z
-        .string({ required_error: 'User email is required' })
-        .pipe(z.email('User email must be valid')),
+      email: z.email('User email must be valid'),
       password: z
         .string()
         .min(6, 'User password must be at least 6 characters')
