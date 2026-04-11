@@ -42,13 +42,11 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false },
 );
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   // only hash the password if it has been modified or it is new
   if (this.isModified('password')) {
     this.password = await hashPassword(this.password);
   }
-
-  next();
 });
 
 UserSchema.pre(

@@ -25,11 +25,10 @@ const UserTokenSchema = new mongoose.Schema(
 );
 
 // Populate users before find calls
-UserTokenSchema.pre(/^find/, function (next) {
+UserTokenSchema.pre(/^find/, function () {
   this.populate({
     path: 'user',
   });
-  next();
 });
 
 const UserSessionTokenModel = mongoose.model(
