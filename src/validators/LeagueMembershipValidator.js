@@ -3,6 +3,23 @@ import { z } from 'zod';
 import objectIdSchema from '../utils/libs/zod/objectIdSchema.js';
 import validate from './validate.js';
 
+const queryBooleanSchema = z.preprocess((value) => {
+  if (typeof value === 'boolean') return value;
+
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim().toLowerCase();
+    if (normalizedValue === 'true' || normalizedValue === '1') return true;
+    if (normalizedValue === 'false' || normalizedValue === '0') return false;
+  }
+
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+
+  return value;
+}, z.boolean());
+
 export const get = validate(
   z.object({
     query: z.object({
@@ -13,7 +30,7 @@ export const get = validate(
       ).optional(),
       squad: objectIdSchema('League membership squad').optional(),
       role: z.string().trim().optional(),
-      isActive: z.coerce.boolean().optional(),
+      isActive: queryBooleanSchema.optional(),
     }),
   }),
 );

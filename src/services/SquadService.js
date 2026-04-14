@@ -35,6 +35,22 @@ export async function update({ _id, inputData }) {
     }).exec();
     if (!foundAcademicLeague)
       throw new NotFoundError('Academic league not found');
+
+    if (
+      foundSquad.academicLeague?.toString() !==
+      inputData.academicLeague.toString()
+    ) {
+      const [hasLeagueMembership, hasRoleHistory] = await Promise.all([
+        LeagueMembershipModel.exists({ squad: _id }).exec(),
+        RoleHistoryModel.exists({ squad: _id }).exec(),
+      ]);
+
+      if (hasLeagueMembership || hasRoleHistory) {
+        throw new ConflictError(
+          'Cannot change academic league for squad with linked data',
+        );
+      }
+    }
   }
 
   return foundSquad.set(inputData).save();
