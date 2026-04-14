@@ -11,7 +11,7 @@ export function confirmEmail({ user, token }) {
       <a
         href="${`${
           process.env.FRONTEND_URL
-        }/email-confirmado/${encodeURIComponent(token)}`}"
+        }/email-confirmation/${encodeURIComponent(token)}`}"
         >aqui.</a
       >
     </p>
