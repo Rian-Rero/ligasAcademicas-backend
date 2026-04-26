@@ -2,6 +2,7 @@ import { ConflictError, NotFoundError } from '../errors/baseErrors.js';
 import AcademicLeagueModel from '../models/AcademicLeagueModel.js';
 import AttendanceModel from '../models/Attendance.js';
 import EventModel from '../models/EventModel.js';
+import { ObjectId } from '../config/mongo.js';
 
 export async function get(inputFilters) {
   const { startsAfter, startsBefore, ...dbFilters } = inputFilters;
@@ -77,13 +78,31 @@ export async function getEngagementById(_id) {
   const foundEvent = await EventModel.findById(_id).lean().exec();
   if (!foundEvent) throw new NotFoundError('Event not found');
 
-  const [totalSubscriptions, confirmedCount, attendedCount] = await Promise.all(
-    [
-      AttendanceModel.countDocuments({ event: _id }).exec(),
-      AttendanceModel.countDocuments({ event: _id, isConfirmed: true }).exec(),
-      AttendanceModel.countDocuments({ event: _id, hasAttended: true }).exec(),
-    ],
-  );
+  const [engagementCounts] = await AttendanceModel.aggregate([
+    {
+      $match: {
+        event: new ObjectId(_id),
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalSubscriptions: { $sum: 1 },
+        confirmedCount: {
+          $sum: { $cond: ['$isConfirmed', 1, 0] },
+        },
+        attendedCount: {
+          $sum: { $cond: ['$hasAttended', 1, 0] },
+        },
+      },
+    },
+  ]).exec();
+
+  const {
+    totalSubscriptions = 0,
+    confirmedCount = 0,
+    attendedCount = 0,
+  } = engagementCounts ?? {};
 
   const absentCount = Math.max(confirmedCount - attendedCount, 0);
   const attendanceRate =

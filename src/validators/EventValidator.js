@@ -15,7 +15,10 @@ const dateSchema = (fieldName) =>
 
       return value;
     },
-    z.date(`${fieldName} must be a valid date`),
+    z.date({
+      invalid_type_error: `${fieldName} must be a valid date`,
+      required_error: `${fieldName} must be a valid date`,
+    }),
   );
 
 export const get = validate(

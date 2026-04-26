@@ -15,19 +15,28 @@ const dateSchema = (fieldName) =>
 
       return value;
     },
-    z.date(`${fieldName} must be a valid date`),
+    z.date({
+      invalid_type_error: `${fieldName} must be a valid date`,
+      required_error: `${fieldName} must be a valid date`,
+    }),
   );
 
-const numberSchema = z.preprocess((value) => {
-  if (typeof value === 'number') return value;
+const numberSchema = z.preprocess(
+  (value) => {
+    if (typeof value === 'number') return value;
 
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsedNumber = Number(value);
-    if (!Number.isNaN(parsedNumber)) return parsedNumber;
-  }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsedNumber = Number(value);
+      if (!Number.isNaN(parsedNumber)) return parsedNumber;
+    }
 
-  return value;
-}, z.number('Value must be a valid number'));
+    return value;
+  },
+  z.number({
+    invalid_type_error: 'Value must be a valid number',
+    required_error: 'Value must be a valid number',
+  }),
+);
 
 export const get = validate(
   z.object({
