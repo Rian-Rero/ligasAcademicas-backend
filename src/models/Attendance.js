@@ -26,6 +26,8 @@ const AttendanceSchema = new mongoose.Schema({
   },
 });
 
+AttendanceSchema.index({ event: 1, leagueMembership: 1 }, { unique: true });
+
 const AttendanceModel = mongoose.model(
   COLLECTION_NAMES.ATTENDANCE,
   AttendanceSchema,

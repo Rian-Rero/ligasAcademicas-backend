@@ -4,7 +4,7 @@ import { COLLECTION_NAMES } from '../utils/general/constants.js';
 import { ObjectId } from '../config/mongo.js';
 
 const CertificateSchema = new mongoose.Schema({
-  leagueMemberShip: {
+  leagueMembership: {
     type: ObjectId,
     ref: COLLECTION_NAMES.LEAGUE_MEMBERSHIP,
     required: true,

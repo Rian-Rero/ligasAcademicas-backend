@@ -88,7 +88,7 @@ export async function destroy(_id) {
     await Promise.all([
       LeagueMembershipModel.findById(_id).exec(),
       AttendanceModel.exists({ leagueMembership: _id }).exec(),
-      CertificateModel.exists({ leagueMemberShip: _id }).exec(),
+      CertificateModel.exists({ leagueMembership: _id }).exec(),
       RoleHistoryModel.exists({ leagueMembership: _id }).exec(),
     ]);
 
