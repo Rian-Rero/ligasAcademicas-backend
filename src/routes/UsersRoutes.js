@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as UserController from '../controllers/UserController.js';
+import verifyManagement from '../middleware/verifyManagement.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import verifyOwnUser from '../middleware/verifyOwnUser.js';
 
@@ -7,7 +8,7 @@ const UserRoutes = Router();
 
 UserRoutes.route('/')
   .get(verifyJWT, UserController.get)
-  .post(UserController.create);
+  .post(verifyJWT, verifyManagement, UserController.create);
 
 UserRoutes.put('/confirm-email/:token', UserController.verifyEmail);
 

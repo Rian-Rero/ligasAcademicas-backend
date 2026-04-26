@@ -6,6 +6,7 @@ import {
   decodeConfirmEmailToken,
   signConfirmEmailJwt,
 } from '../utils/libs/jwt.js';
+import { generateTemporaryPassword } from '../utils/libs/randomPassword.js';
 import * as UserValidator from '../validators/UserValidator.js';
 
 export const get = asyncHandler(async (req, res) => {
@@ -24,10 +25,19 @@ export const getById = asyncHandler(async (req, res) => {
 
 export const create = asyncHandler(async (req, res) => {
   const inputData = UserValidator.create(req);
-  const newUser = await UserService.create(inputData);
+  const temporaryPassword = generateTemporaryPassword();
+
+  const newUser = await UserService.create({
+    ...inputData,
+    password: temporaryPassword,
+  });
 
   const token = signConfirmEmailJwt(newUser._id);
-  await EmailHandler.confirmEmail({ user: newUser, token });
+  await EmailHandler.confirmEmail({
+    user: newUser,
+    token,
+    temporaryPassword,
+  });
 
   res.status(SUCCESS_CODES.CREATED).json(newUser);
 });
