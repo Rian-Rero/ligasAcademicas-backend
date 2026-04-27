@@ -9,6 +9,12 @@ const EventSchema = new mongoose.Schema({
     ref: COLLECTION_NAMES.ACADEMIC_LEAGUE,
     required: true,
   },
+  squad: {
+    type: ObjectId,
+    ref: COLLECTION_NAMES.SQUAD,
+    required: false,
+    default: null,
+  },
   title: {
     type: String,
     required: true,
