@@ -6,6 +6,7 @@ import {
   decodeConfirmEmailToken,
   signConfirmEmailJwt,
 } from '../utils/libs/jwt.js';
+import { generateTemporaryPassword } from '../utils/libs/randomPassword.js';
 import * as UserValidator from '../validators/UserValidator.js';
 
 export const get = asyncHandler(async (req, res) => {
@@ -24,10 +25,19 @@ export const getById = asyncHandler(async (req, res) => {
 
 export const create = asyncHandler(async (req, res) => {
   const inputData = UserValidator.create(req);
-  const newUser = await UserService.create(inputData);
+  const temporaryPassword = generateTemporaryPassword();
+
+  const newUser = await UserService.create({
+    ...inputData,
+    password: temporaryPassword,
+  });
 
   const token = signConfirmEmailJwt(newUser._id);
-  await EmailHandler.confirmEmail({ user: newUser, token });
+  await EmailHandler.confirmEmail({
+    user: newUser,
+    token,
+    temporaryPassword,
+  });
 
   res.status(SUCCESS_CODES.CREATED).json(newUser);
 });
@@ -49,6 +59,34 @@ export const update = asyncHandler(async (req, res) => {
   const updatedUser = await UserService.update({ _id, inputData });
 
   res.status(SUCCESS_CODES.OK).json(updatedUser);
+});
+
+export const updateByManagement = asyncHandler(async (req, res) => {
+  const { _id, ...inputData } = UserValidator.updateByManagement(req);
+  const updatedUser = await UserService.update({ _id, inputData });
+
+  res.status(SUCCESS_CODES.OK).json(updatedUser);
+});
+
+export const resetPasswordByManagement = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.resetPasswordByManagement(req);
+  const temporaryPassword = generateTemporaryPassword();
+
+  const updatedUser = await UserService.update({
+    _id,
+    inputData: { password: temporaryPassword },
+  });
+
+  await EmailHandler.managementPasswordResetEmail({
+    user: updatedUser,
+    temporaryPassword,
+  });
+
+  res.status(SUCCESS_CODES.OK).json({
+    _id: updatedUser._id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+  });
 });
 
 export const destroy = asyncHandler(async (req, res) => {
