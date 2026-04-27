@@ -2,20 +2,34 @@ import { ForbiddenError } from '../errors/baseErrors.js';
 import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
 
-const MANAGEMENT_ROLE_REGEX = /(admin|manager|gest|diret|presid|coorden)/i;
+const MANAGEMENT_ROLE_VALUES = ['admin', 'president'];
+const MANAGEMENT_ROLE_PATTERNS = MANAGEMENT_ROLE_VALUES.map(
+  (role) => new RegExp(`^${role}$`, 'i'),
+);
 
 const verifyManagement = asyncHandler(async (req, res, next) => {
   const authUser = req.user;
 
-  if (MANAGEMENT_ROLE_REGEX.test(String(authUser?.globalRole || ''))) {
+  if (authUser?.globalRole === 'admin') {
     next();
     return;
   }
 
+  const academicLeagueId =
+    req.params?.academicLeague ||
+    req.params?.academicLeagueId ||
+    req.body?.academicLeague ||
+    req.body?.academicLeagueId;
+
+  if (!academicLeagueId) {
+    throw new ForbiddenError('Access denied');
+  }
+
   const activeManagementMembership = await LeagueMembershipModel.findOne({
     user: authUser?._id,
+    academicLeague: academicLeagueId,
     isActive: true,
-    role: { $regex: MANAGEMENT_ROLE_REGEX },
+    role: { $in: MANAGEMENT_ROLE_PATTERNS },
   })
     .lean()
     .exec();

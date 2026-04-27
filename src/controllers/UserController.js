@@ -33,11 +33,16 @@ export const create = asyncHandler(async (req, res) => {
   });
 
   const token = signConfirmEmailJwt(newUser._id);
-  await EmailHandler.confirmEmail({
-    user: newUser,
-    token,
-    temporaryPassword,
-  });
+  try {
+    await EmailHandler.confirmEmail({
+      user: newUser,
+      token,
+      temporaryPassword,
+    });
+  } catch (error) {
+    await UserService.destroy(newUser._id);
+    throw error;
+  }
 
   res.status(SUCCESS_CODES.CREATED).json(newUser);
 });
