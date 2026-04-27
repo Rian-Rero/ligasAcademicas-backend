@@ -61,6 +61,34 @@ export const update = asyncHandler(async (req, res) => {
   res.status(SUCCESS_CODES.OK).json(updatedUser);
 });
 
+export const updateByManagement = asyncHandler(async (req, res) => {
+  const { _id, ...inputData } = UserValidator.updateByManagement(req);
+  const updatedUser = await UserService.update({ _id, inputData });
+
+  res.status(SUCCESS_CODES.OK).json(updatedUser);
+});
+
+export const resetPasswordByManagement = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.resetPasswordByManagement(req);
+  const temporaryPassword = generateTemporaryPassword();
+
+  const updatedUser = await UserService.update({
+    _id,
+    inputData: { password: temporaryPassword },
+  });
+
+  await EmailHandler.managementPasswordResetEmail({
+    user: updatedUser,
+    temporaryPassword,
+  });
+
+  res.status(SUCCESS_CODES.OK).json({
+    _id: updatedUser._id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+  });
+});
+
 export const destroy = asyncHandler(async (req, res) => {
   const { _id } = UserValidator.destroy(req);
   await UserService.destroy(_id);

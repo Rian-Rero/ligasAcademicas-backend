@@ -15,6 +15,19 @@ UserRoutes.put('/confirm-email/:token', UserController.verifyEmail);
 UserRoutes.post('/forgot-password', UserController.forgotPassword);
 UserRoutes.put('/forgot-password/:token', UserController.redefinePassword);
 
+UserRoutes.put(
+  '/management/:_id',
+  verifyJWT,
+  verifyManagement,
+  UserController.updateByManagement,
+);
+UserRoutes.post(
+  '/management/:_id/reset-password',
+  verifyJWT,
+  verifyManagement,
+  UserController.resetPasswordByManagement,
+);
+
 UserRoutes.route('/:_id')
   .get(UserController.getById)
   .put(verifyJWT, verifyOwnUser, UserController.update)

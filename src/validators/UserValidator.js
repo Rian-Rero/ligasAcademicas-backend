@@ -82,12 +82,39 @@ export const update = validate(
         .min(3, 'User name must be at least 3 characters')
         .max(40, 'User name must be a maximum of 40 characters')
         .optional(),
+      imageURL: z.string().optional(),
+    }),
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
+export const updateByManagement = validate(
+  z.object({
+    body: z.object({
+      name: z
+        .string()
+        .min(3, 'User name must be at least 3 characters')
+        .max(40, 'User name must be a maximum of 40 characters')
+        .optional(),
+      email: z.email('User email must be valid').optional(),
       globalRole: z
         .string()
         .min(3, 'User global role must be at least 3 characters')
         .max(40, 'User global role must be a maximum of 40 characters')
         .optional(),
+      emailVerified: z.boolean().optional(),
+      imageURL: z.string().optional(),
     }),
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
+export const resetPasswordByManagement = validate(
+  z.object({
     params: z.object({
       _id: objectIdSchema('User _id'),
     }),

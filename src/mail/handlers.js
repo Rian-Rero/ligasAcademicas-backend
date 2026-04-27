@@ -148,3 +148,98 @@ export function redefinePasswordEmail({ user, passwordToken }) {
 
   return sendEmail(mailOptions);
 }
+
+export function managementPasswordResetEmail({ user, temporaryPassword }) {
+  const loginLink = `${process.env.FRONTEND_URL}/login`;
+  const forgotPasswordLink = `${process.env.FRONTEND_URL}/forgot-password`;
+
+  const body = html`
+    <div
+      style="
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #0f172a;
+        line-height: 1.5;
+      "
+    >
+      <h1 style="margin: 0 0 14px 0; color: #0f172a;">
+        Sua senha foi redefinida
+      </h1>
+
+      <p>Olá, ${user.name}!</p>
+      <p>
+        Um gestor redefiniu seu acesso no Sistema de Ligas Acadêmicas (SGLA).
+      </p>
+
+      <div
+        style="
+          margin: 16px 0;
+          padding: 14px;
+          border: 1px solid #dbeafe;
+          border-radius: 8px;
+          background: #f8fbff;
+        "
+      >
+        <p style="margin: 0 0 8px 0; color: #1e3a8a; font-weight: 700;">
+          Nova senha temporária
+        </p>
+        <p
+          style="
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0f172a;
+          "
+        >
+          ${temporaryPassword}
+        </p>
+      </div>
+
+      <div style="margin: 18px 0;">
+        <a
+          href="${loginLink}"
+          style="
+            display: inline-block;
+            padding: 12px 18px;
+            background: #1d4ed8;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 700;
+          "
+        >
+          Acessar sistema
+        </a>
+      </div>
+
+      <p style="margin-bottom: 8px;"><strong>Próximos passos:</strong></p>
+      <ol style="margin: 0 0 16px 18px; padding: 0;">
+        <li style="margin-bottom: 6px;">
+          Faça login com seu e-mail e a senha temporária acima.
+        </li>
+        <li>
+          Troque sua senha em
+          <a href="${forgotPasswordLink}">Recuperar senha</a>.
+        </li>
+      </ol>
+    </div>
+  `;
+
+  const mailOptions = {
+    to: user.email,
+    subject: `[SGLA] - Senha redefinida pela gestão`,
+    text: [
+      `Olá, ${user.name}!`,
+      'Seu acesso no Sistema de Ligas Acadêmicas (SGLA) foi redefinido.',
+      `Nova senha temporária: ${temporaryPassword}`,
+      `Acesse: ${loginLink}`,
+      `Troque sua senha em: ${forgotPasswordLink}`,
+    ].join('\n'),
+    html: template(body),
+  };
+
+  return sendEmail(mailOptions);
+}
