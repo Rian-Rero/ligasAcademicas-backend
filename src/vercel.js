@@ -1,17 +1,10 @@
-import startClusterServerInProd from './config/cluster.js';
 import app from './app.js';
 import mongoConfig from './config/mongo.js';
 
 let connectionPromise;
 
-async function handler(req, res) {
+export default async function handler(req, res) {
   if (!connectionPromise) connectionPromise = mongoConfig();
   await connectionPromise;
   return app(req, res);
 }
-
-if (!process.env.VERCEL) {
-  startClusterServerInProd();
-}
-
-export default handler;
