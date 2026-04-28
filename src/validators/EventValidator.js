@@ -21,11 +21,14 @@ const dateSchema = (fieldName) =>
     }),
   );
 
+const squadSchema = z.union([objectIdSchema('Event squad'), z.null()]);
+
 export const get = validate(
   z.object({
     query: z.object({
       _id: objectIdSchema('Event _id').optional(),
       academicLeague: objectIdSchema('Event academic league').optional(),
+      squad: objectIdSchema('Event squad').optional(),
       title: z.string().trim().optional(),
       description: z.string().trim().optional(),
       location: z.string().trim().optional(),
@@ -47,6 +50,7 @@ export const create = validate(
   z.object({
     body: z.object({
       academicLeague: objectIdSchema('Event academic league'),
+      squad: squadSchema.optional(),
       title: z
         .string({ required_error: 'Event title is required' })
         .trim()
@@ -71,6 +75,7 @@ export const update = validate(
   z.object({
     body: z.object({
       academicLeague: objectIdSchema('Event academic league').optional(),
+      squad: squadSchema.optional(),
       title: z
         .string()
         .trim()
