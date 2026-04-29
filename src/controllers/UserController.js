@@ -30,6 +30,7 @@ export const create = asyncHandler(async (req, res) => {
   const newUser = await UserService.create({
     ...inputData,
     password: temporaryPassword,
+    mustChangePassword: true,
   });
 
   const token = signConfirmEmailJwt(newUser._id);
@@ -79,7 +80,7 @@ export const resetPasswordByManagement = asyncHandler(async (req, res) => {
 
   const updatedUser = await UserService.update({
     _id,
-    inputData: { password: temporaryPassword },
+    inputData: { password: temporaryPassword, mustChangePassword: true },
   });
 
   await EmailHandler.managementPasswordResetEmail({
@@ -119,6 +120,15 @@ export const redefinePassword = asyncHandler(async (req, res) => {
     token,
     newPassword,
   });
+
+  res.status(SUCCESS_CODES.OK).json(updatedUser.name);
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.getById(req);
+  const { newPassword } = UserValidator.changePassword(req);
+
+  const updatedUser = await UserService.changePassword({ _id, newPassword });
 
   res.status(SUCCESS_CODES.OK).json(updatedUser.name);
 });

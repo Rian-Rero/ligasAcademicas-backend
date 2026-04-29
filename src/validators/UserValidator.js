@@ -74,6 +74,20 @@ export const redefinePassword = validate(
   }),
 );
 
+export const changePassword = validate(
+  z.object({
+    body: z.object({
+      newPassword: z
+        .string({ required_error: 'User new password is required' })
+        .min(6, 'User password must be at least 6 characters')
+        .max(16, 'User password must be a maximum of 16 characters'),
+    }),
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
 export const update = validate(
   z.object({
     body: z.object({

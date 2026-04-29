@@ -32,4 +32,11 @@ UserRoutes.route('/:_id')
   .get(UserController.getById)
   .put(verifyJWT, verifyOwnUser, UserController.update)
   .delete(verifyJWT, verifyOwnUser, UserController.destroy);
+// Change password for the authenticated user
+UserRoutes.put(
+  '/:_id/change-password',
+  verifyJWT,
+  verifyOwnUser,
+  UserController.changePassword,
+);
 export default UserRoutes;
