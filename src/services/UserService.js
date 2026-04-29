@@ -46,9 +46,11 @@ export async function forgotPassword(email) {
     .exec();
   if (!foundUser) throw new NotFoundError('User not found');
 
+  // Generate JWT token for password reset
   const passwordToken = signForgotPasswordJwt(foundUser._id);
 
-  await UserPwdTokenModel.deleteMany({ user: foundUser._id }).exec(); // Reset all previous attempts to redefine password
+  // Clear previous tokens and create new one (single-use, with expiration)
+  await UserPwdTokenModel.deleteMany({ user: foundUser._id }).exec();
   await UserPwdTokenModel.create({
     user: foundUser._id,
     token: passwordToken,
@@ -72,5 +74,18 @@ export async function redefinePassword({ token, newPassword }) {
 
   await foundToken.deleteOne(); // The user password can only be updated one time with the same token
 
-  return foundUser.set({ password: newPassword }).save();
+  // Reset mustChangePassword flag when a password is redefined through the forgot-password flow
+  return foundUser
+    .set({ password: newPassword, mustChangePassword: false })
+    .save();
+}
+
+export async function changePassword({ _id, newPassword }) {
+  const foundUser = await UserModel.findById(_id).exec();
+  if (!foundUser) throw new NotFoundError('User not found');
+
+  // Update password and clear mustChangePassword flag
+  return foundUser
+    .set({ password: newPassword, mustChangePassword: false })
+    .save();
 }

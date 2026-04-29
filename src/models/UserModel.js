@@ -38,6 +38,11 @@ const UserSchema = new mongoose.Schema(
       required: false,
       default: false,
     },
+    mustChangePassword: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   { timestamps: true, versionKey: false },
 );
