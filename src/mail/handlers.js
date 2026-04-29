@@ -123,26 +123,103 @@ export function confirmEmail({ user, token, temporaryPassword }) {
 }
 
 export function redefinePasswordEmail({ user, passwordToken }) {
+  const resetLink = `${process.env.FRONTEND_URL}/redefinir-senha/${encodeURIComponent(passwordToken)}`;
+
   const body = html`
-    <p>Olá, ${user.name}!</p>
-    <p>
-      Para alterar sua senha, favor clicar
-      <a
-        href="${`${
-          process.env.FRONTEND_URL
-        }/redefinir-senha/${encodeURIComponent(passwordToken)}`}"
-        >aqui.</a
+    <div
+      style="
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #0f172a;
+        line-height: 1.5;
+      "
+    >
+      <h1 style="margin: 0 0 14px 0; color: #0f172a;">
+        Redefinição de senha solicitada
+      </h1>
+
+      <p>Olá, ${user.name}!</p>
+      <p>
+        Recebemos uma solicitação para redefinir sua senha no Sistema de Ligas
+        Acadêmicas (SGLA).
+      </p>
+
+      <div
+        style="
+          margin: 20px 0;
+          padding: 16px;
+          border: 2px solid #1d4ed8;
+          border-radius: 8px;
+          background: #eff6ff;
+        "
       >
-    </p>
+        <p style="margin: 0 0 12px 0; color: #1e3a8a; font-weight: 700;">
+          ⏰ Este link expira em 1 hora
+        </p>
+        <a
+          href="${resetLink}"
+          style="
+            display: inline-block;
+            padding: 12px 24px;
+            background: #1d4ed8;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 16px;
+          "
+        >
+          Redefinir senha
+        </a>
+      </div>
+
+      <p style="margin-bottom: 8px; margin-top: 20px;">
+        <strong>O que fazer agora:</strong>
+      </p>
+      <ol style="margin: 0 0 16px 18px; padding: 0;">
+        <li style="margin-bottom: 8px;">
+          Clique no botão acima ou copie o link para seu navegador.
+        </li>
+        <li style="margin-bottom: 8px;">
+          Escolha uma nova senha segura (mínimo 6 caracteres).
+        </li>
+        <li>Confirme sua nova senha.</li>
+      </ol>
+
+      <div
+        style="
+          margin: 16px 0;
+          padding: 12px;
+          border-left: 4px solid #ef4444;
+          background: #fef2f2;
+        "
+      >
+        <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
+          <strong>⚠️ Importante:</strong> Se você não solicitou esta
+          redefinição, ignore este e-mail. O link acima é único e expira em 1
+          hora.
+        </p>
+      </div>
+    </div>
   `;
 
   const mailOptions = {
     to: user.email,
     subject: `[SGLA] - Redefinição de senha`,
-    text: `
-    Olá, ${user.name}! Para redefinir sua senha, favor acessar o link abaixo:
-    ${`${process.env.FRONTEND_URL}/redefinir-senha/${encodeURIComponent(passwordToken)}`}
-    `,
+    text: [
+      `Olá, ${user.name}!`,
+      'Redefinição de senha solicitada no Sistema de Ligas Acadêmicas (SGLA).',
+      `Link para redefinir: ${resetLink}`,
+      'Este link expira em 1 hora.',
+      '',
+      'O que fazer:',
+      '1) Clique no link acima',
+      '2) Digite uma nova senha segura',
+      '3) Confirme sua nova senha',
+      '',
+      'Se você não solicitou isso, ignore este e-mail.',
+    ].join('\n'),
     html: template(body),
   };
 

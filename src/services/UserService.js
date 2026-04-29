@@ -46,9 +46,11 @@ export async function forgotPassword(email) {
     .exec();
   if (!foundUser) throw new NotFoundError('User not found');
 
+  // Generate JWT token for password reset
   const passwordToken = signForgotPasswordJwt(foundUser._id);
 
-  await UserPwdTokenModel.deleteMany({ user: foundUser._id }).exec(); // Reset all previous attempts to redefine password
+  // Clear previous tokens and create new one (single-use, with expiration)
+  await UserPwdTokenModel.deleteMany({ user: foundUser._id }).exec();
   await UserPwdTokenModel.create({
     user: foundUser._id,
     token: passwordToken,
