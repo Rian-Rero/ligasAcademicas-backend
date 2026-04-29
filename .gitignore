@@ -27,3 +27,5 @@ node_modules
 
 #dotenv
 .env
+.vercel
+.env*.local
