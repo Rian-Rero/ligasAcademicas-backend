@@ -12,12 +12,17 @@ const LeagueMembershipSchema = new mongoose.Schema({
   academicLeague: {
     type: ObjectId,
     ref: COLLECTION_NAMES.ACADEMIC_LEAGUE,
-    required: true,
+    required: false,
   },
   squad: {
     type: ObjectId,
     ref: COLLECTION_NAMES.SQUAD,
-    required: true,
+    required: false,
+  },
+  university: {
+    type: ObjectId,
+    ref: COLLECTION_NAMES.UNIVERSITY,
+    required: false,
   },
   role: {
     type: String,

@@ -28,6 +28,7 @@ export const get = validate(
       academicLeague: objectIdSchema(
         'League membership academic league',
       ).optional(),
+      university: objectIdSchema('League membership university').optional(),
       squad: objectIdSchema('League membership squad').optional(),
       role: z.string().trim().optional(),
       isActive: queryBooleanSchema.optional(),
@@ -47,8 +48,12 @@ export const create = validate(
   z.object({
     body: z.object({
       user: objectIdSchema('League membership user'),
-      academicLeague: objectIdSchema('League membership academic league'),
-      squad: objectIdSchema('League membership squad'),
+      membershipType: z.enum(['university', 'league']).optional(),
+      academicLeague: objectIdSchema(
+        'League membership academic league',
+      ).optional(),
+      university: objectIdSchema('League membership university').optional(),
+      squad: objectIdSchema('League membership squad').optional(),
       role: z
         .string({ required_error: 'League membership role is required' })
         .trim()
@@ -65,9 +70,11 @@ export const update = validate(
   z.object({
     body: z.object({
       user: objectIdSchema('League membership user').optional(),
+      membershipType: z.enum(['university', 'league']).optional(),
       academicLeague: objectIdSchema(
         'League membership academic league',
       ).optional(),
+      university: objectIdSchema('League membership university').optional(),
       squad: objectIdSchema('League membership squad').optional(),
       role: z
         .string()
