@@ -1,10 +1,15 @@
-import { ForbiddenError, NotFoundError } from '../errors/baseErrors.js';
+import {
+  ForbiddenError,
+  NotFoundError,
+  BadRequest,
+} from '../errors/baseErrors.js';
 import UserModel from '../models/UserModel.js';
 import UserPwdTokenModel from '../models/UserPwdTokenModel.js';
 import {
   decodeForgotPasswordToken,
   signForgotPasswordJwt,
 } from '../utils/libs/jwt.js';
+import { comparePasswords } from '../utils/libs/bcrypt.js';
 
 export async function get(inputFilters) {
   return UserModel.find(inputFilters).lean().exec();
@@ -80,9 +85,17 @@ export async function redefinePassword({ token, newPassword }) {
     .save();
 }
 
-export async function changePassword({ _id, newPassword }) {
-  const foundUser = await UserModel.findById(_id).exec();
+export async function changePassword({ _id, newPassword, currentPassword }) {
+  const foundUser = await UserModel.findById(_id).select('+password').exec();
   if (!foundUser) throw new NotFoundError('User not found');
+
+  // If user is not in forced-change mode, require currentPassword and verify it
+  if (!foundUser.mustChangePassword) {
+    if (!currentPassword) throw new BadRequest('Current password is required');
+
+    const isMatch = await comparePasswords(currentPassword, foundUser.password);
+    if (!isMatch) throw new ForbiddenError('Current password incorrect');
+  }
 
   // Update password and clear mustChangePassword flag
   return foundUser

@@ -126,9 +126,13 @@ export const redefinePassword = asyncHandler(async (req, res) => {
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { _id } = UserValidator.getById(req);
-  const { newPassword } = UserValidator.changePassword(req);
+  const { newPassword, currentPassword } = UserValidator.changePassword(req);
 
-  const updatedUser = await UserService.changePassword({ _id, newPassword });
+  const updatedUser = await UserService.changePassword({
+    _id,
+    newPassword,
+    currentPassword,
+  });
 
   res.status(SUCCESS_CODES.OK).json(updatedUser.name);
 });
