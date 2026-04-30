@@ -51,6 +51,31 @@ export const verifyEmail = validate(
   }),
 );
 
+export const getGoogleCalendarLinkUrl = validate(
+  z.object({
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
+export const handleGoogleCalendarCallback = validate(
+  z.object({
+    query: z.object({
+      code: z.string({ required_error: 'Google callback code is required' }),
+      state: z.string({ required_error: 'Google callback state is required' }),
+    }),
+  }),
+);
+
+export const unlinkGoogleCalendar = validate(
+  z.object({
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
 export const forgotPassword = validate(
   z.object({
     body: z.object({

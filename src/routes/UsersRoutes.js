@@ -14,6 +14,22 @@ UserRoutes.put('/confirm-email/:token', UserController.verifyEmail);
 
 UserRoutes.post('/forgot-password', UserController.forgotPassword);
 UserRoutes.put('/forgot-password/:token', UserController.redefinePassword);
+UserRoutes.get(
+  '/google-calendar/callback',
+  UserController.handleGoogleCalendarCallback,
+);
+UserRoutes.post(
+  '/:_id/google-calendar/link-url',
+  verifyJWT,
+  verifyOwnUser,
+  UserController.getGoogleCalendarLinkUrl,
+);
+UserRoutes.delete(
+  '/:_id/google-calendar/link',
+  verifyJWT,
+  verifyOwnUser,
+  UserController.unlinkGoogleCalendar,
+);
 
 UserRoutes.put(
   '/management/:_id',

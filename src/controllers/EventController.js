@@ -19,21 +19,28 @@ export const getById = asyncHandler(async (req, res) => {
 
 export const create = asyncHandler(async (req, res) => {
   const inputData = EventValidator.create(req);
-  const newEvent = await EventService.create(inputData);
+  const newEvent = await EventService.create({
+    inputData,
+    actorUserId: req.user?._id,
+  });
 
   res.status(SUCCESS_CODES.CREATED).json(newEvent);
 });
 
 export const update = asyncHandler(async (req, res) => {
   const { _id, ...inputData } = EventValidator.update(req);
-  const updatedEvent = await EventService.update({ _id, inputData });
+  const updatedEvent = await EventService.update({
+    _id,
+    inputData,
+    actorUserId: req.user?._id,
+  });
 
   res.status(SUCCESS_CODES.OK).json(updatedEvent);
 });
 
 export const destroy = asyncHandler(async (req, res) => {
   const { _id } = EventValidator.destroy(req);
-  await EventService.destroy(_id);
+  await EventService.destroy({ _id, actorUserId: req.user?._id });
 
   res.sendStatus(SUCCESS_CODES.NO_CONTENT);
 });

@@ -11,12 +11,38 @@ import {
 } from '../utils/libs/jwt.js';
 import { comparePasswords } from '../utils/libs/bcrypt.js';
 
+function sanitizeGoogleTokens(userLike) {
+  const user =
+    typeof userLike?.toObject === 'function' ? userLike.toObject() : userLike;
+  if (!user) return user;
+
+  const sanitized = { ...user };
+  delete sanitized.googleCalendarAccessToken;
+  delete sanitized.googleCalendarRefreshToken;
+  delete sanitized.googleCalendarTokenExpiryDate;
+  delete sanitized.googleCalendarScope;
+
+  return sanitized;
+}
+
 export async function get(inputFilters) {
   return UserModel.find(inputFilters).lean().exec();
 }
 
 export async function getById(_id) {
   const foundUser = await UserModel.findById(_id).lean().exec();
+  if (!foundUser) throw new NotFoundError('User not found');
+
+  return foundUser;
+}
+
+export async function getByIdWithGoogleTokens(_id) {
+  const foundUser = await UserModel.findById(_id)
+    .select(
+      '+googleCalendarAccessToken +googleCalendarRefreshToken +googleCalendarTokenExpiryDate +googleCalendarScope',
+    )
+    .exec();
+
   if (!foundUser) throw new NotFoundError('User not found');
 
   return foundUser;
@@ -34,6 +60,63 @@ export async function update({ _id, inputData }) {
   if (!foundUser) throw new NotFoundError('User not found');
 
   return foundUser.set(inputData).save();
+}
+
+export async function linkGoogleCalendar({ _id, googleEmail, tokenData }) {
+  const foundUser = await getByIdWithGoogleTokens(_id);
+
+  const updatedUser = await foundUser
+    .set({
+      googleCalendarLinked: true,
+      googleCalendarEmail: googleEmail,
+      googleCalendarLinkedAt: new Date(),
+      googleCalendarAccessToken:
+        tokenData.accessToken || foundUser.googleCalendarAccessToken,
+      googleCalendarRefreshToken:
+        tokenData.refreshToken || foundUser.googleCalendarRefreshToken,
+      googleCalendarTokenExpiryDate: tokenData.tokenExpiryDate,
+      googleCalendarScope: tokenData.scope,
+    })
+    .save();
+
+  return sanitizeGoogleTokens(updatedUser);
+}
+
+export async function unlinkGoogleCalendar(_id) {
+  const foundUser = await getByIdWithGoogleTokens(_id);
+
+  const updatedUser = await foundUser
+    .set({
+      googleCalendarLinked: false,
+      googleCalendarEmail: null,
+      googleCalendarLinkedAt: null,
+      googleCalendarAccessToken: null,
+      googleCalendarRefreshToken: null,
+      googleCalendarTokenExpiryDate: null,
+      googleCalendarScope: null,
+    })
+    .save();
+
+  return sanitizeGoogleTokens(updatedUser);
+}
+
+export async function updateGoogleCalendarTokens(_id, tokenData) {
+  const foundUser = await getByIdWithGoogleTokens(_id);
+
+  const nextAccessToken =
+    tokenData.accessToken || foundUser.googleCalendarAccessToken;
+  const nextRefreshToken =
+    tokenData.refreshToken || foundUser.googleCalendarRefreshToken;
+
+  return foundUser
+    .set({
+      googleCalendarAccessToken: nextAccessToken,
+      googleCalendarRefreshToken: nextRefreshToken,
+      googleCalendarTokenExpiryDate:
+        tokenData.tokenExpiryDate || foundUser.googleCalendarTokenExpiryDate,
+      googleCalendarScope: tokenData.scope || foundUser.googleCalendarScope,
+    })
+    .save();
 }
 
 export async function destroy(_id) {

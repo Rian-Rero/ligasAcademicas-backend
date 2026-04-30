@@ -1,8 +1,15 @@
-import { ConflictError, NotFoundError } from '../errors/baseErrors.js';
+import {
+  BadRequest,
+  ConflictError,
+  NotFoundError,
+} from '../errors/baseErrors.js';
 import AcademicLeagueModel from '../models/AcademicLeagueModel.js';
 import AttendanceModel from '../models/Attendance.js';
 import EventModel from '../models/EventModel.js';
 import SquadModel from '../models/SquadModel.js';
+import UserModel from '../models/UserModel.js';
+import * as GoogleCalendarService from './GoogleCalendarService.js';
+import * as UserService from './UserService.js';
 import { ObjectId } from '../config/mongo.js';
 
 function isSameObjectId(left, right) {
@@ -21,6 +28,40 @@ async function ensureSquadMatchesLeague({ squadId, academicLeagueId }) {
       'Squad does not belong to informed academic league',
     );
   }
+}
+
+async function getUserWithGoogleTokens(userId) {
+  if (!userId) return null;
+
+  return UserModel.findById(userId)
+    .select(
+      '+googleCalendarAccessToken +googleCalendarRefreshToken +googleCalendarTokenExpiryDate +googleCalendarScope',
+    )
+    .lean()
+    .exec();
+}
+
+function ensureGoogleIsLinked(userData) {
+  return Boolean(
+    userData?.googleCalendarLinked && userData?.googleCalendarRefreshToken,
+  );
+}
+
+function toGoogleSyncError(prefix, error) {
+  return new BadRequest(`${prefix}: ${error?.message || 'Unknown error'}`);
+}
+
+function composeNextEventData(foundEvent, inputData) {
+  return {
+    ...foundEvent.toObject(),
+    ...inputData,
+  };
+}
+
+async function persistRefreshedUserTokens(userId, tokenData) {
+  if (!tokenData) return;
+
+  await UserService.updateGoogleCalendarTokens(userId, tokenData);
 }
 
 export async function get(inputFilters) {
@@ -47,7 +88,7 @@ export async function getById(_id) {
   return foundEvent;
 }
 
-export async function create(inputData) {
+export async function create({ inputData, actorUserId }) {
   const foundAcademicLeague = await AcademicLeagueModel.exists({
     _id: inputData.academicLeague,
   }).exec();
@@ -61,10 +102,39 @@ export async function create(inputData) {
     });
   }
 
-  return (await EventModel.create(inputData)).toObject();
+  const createdEvent = await EventModel.create(inputData);
+
+  if (!actorUserId) return createdEvent.toObject();
+
+  const actorUser = await getUserWithGoogleTokens(actorUserId);
+  if (!ensureGoogleIsLinked(actorUser)) return createdEvent.toObject();
+
+  try {
+    const { googleEventId, refreshedTokenData } =
+      await GoogleCalendarService.createGoogleCalendarEvent({
+        userTokens: actorUser,
+        event: createdEvent,
+      });
+
+    createdEvent.googleCalendarEventId = googleEventId;
+    createdEvent.googleCalendarUserId = actorUserId;
+
+    await Promise.all([
+      createdEvent.save(),
+      persistRefreshedUserTokens(actorUserId, refreshedTokenData),
+    ]);
+
+    return createdEvent.toObject();
+  } catch (error) {
+    await createdEvent.deleteOne();
+    throw toGoogleSyncError(
+      'Failed to sync event with Google Calendar during creation',
+      error,
+    );
+  }
 }
 
-export async function update({ _id, inputData }) {
+export async function update({ _id, inputData, actorUserId }) {
   const foundEvent = await EventModel.findById(_id).exec();
   if (!foundEvent) throw new NotFoundError('Event not found');
 
@@ -112,10 +182,60 @@ export async function update({ _id, inputData }) {
     }
   }
 
-  return foundEvent.set(inputData).save();
+  const nextEvent = composeNextEventData(foundEvent, inputData);
+  const googleSyncPatch = {};
+
+  if (foundEvent.googleCalendarEventId && foundEvent.googleCalendarUserId) {
+    const googleOwner = await getUserWithGoogleTokens(
+      foundEvent.googleCalendarUserId,
+    );
+    if (ensureGoogleIsLinked(googleOwner)) {
+      try {
+        const { refreshedTokenData } =
+          await GoogleCalendarService.updateGoogleCalendarEvent({
+            userTokens: googleOwner,
+            event: nextEvent,
+            googleEventId: foundEvent.googleCalendarEventId,
+          });
+
+        await persistRefreshedUserTokens(
+          foundEvent.googleCalendarUserId,
+          refreshedTokenData,
+        );
+      } catch (error) {
+        throw toGoogleSyncError(
+          'Failed to sync event update with Google Calendar',
+          error,
+        );
+      }
+    }
+  } else if (actorUserId) {
+    const actorUser = await getUserWithGoogleTokens(actorUserId);
+    if (ensureGoogleIsLinked(actorUser)) {
+      try {
+        const { googleEventId, refreshedTokenData } =
+          await GoogleCalendarService.createGoogleCalendarEvent({
+            userTokens: actorUser,
+            event: nextEvent,
+          });
+
+        googleSyncPatch.googleCalendarEventId = googleEventId;
+        googleSyncPatch.googleCalendarUserId = actorUserId;
+
+        await persistRefreshedUserTokens(actorUserId, refreshedTokenData);
+      } catch (error) {
+        throw toGoogleSyncError(
+          'Failed to sync event update with Google Calendar',
+          error,
+        );
+      }
+    }
+  }
+
+  return foundEvent.set({ ...inputData, ...googleSyncPatch }).save();
 }
 
-export async function destroy(_id) {
+export async function destroy({ _id }) {
   const [foundEvent, hasAttendance] = await Promise.all([
     EventModel.findById(_id).exec(),
     AttendanceModel.exists({ event: _id }).exec(),
@@ -124,6 +244,32 @@ export async function destroy(_id) {
   if (!foundEvent) throw new NotFoundError('Event not found');
   if (hasAttendance)
     throw new ConflictError('Cannot delete event with linked attendance data');
+
+  if (foundEvent.googleCalendarEventId && foundEvent.googleCalendarUserId) {
+    const googleOwner = await getUserWithGoogleTokens(
+      foundEvent.googleCalendarUserId,
+    );
+
+    if (ensureGoogleIsLinked(googleOwner)) {
+      try {
+        const { refreshedTokenData } =
+          await GoogleCalendarService.deleteGoogleCalendarEvent({
+            userTokens: googleOwner,
+            googleEventId: foundEvent.googleCalendarEventId,
+          });
+
+        await persistRefreshedUserTokens(
+          foundEvent.googleCalendarUserId,
+          refreshedTokenData,
+        );
+      } catch (error) {
+        throw toGoogleSyncError(
+          'Failed to remove event from Google Calendar',
+          error,
+        );
+      }
+    }
+  }
 
   await foundEvent.deleteOne();
 }
