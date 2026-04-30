@@ -43,6 +43,47 @@ const UserSchema = new mongoose.Schema(
       required: false,
       default: false,
     },
+    googleCalendarLinked: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    googleCalendarEmail: {
+      type: String,
+      required: false,
+      trim: true,
+      lowercase: true,
+      default: null,
+    },
+    googleCalendarLinkedAt: {
+      type: Date,
+      required: false,
+      default: null,
+    },
+    googleCalendarAccessToken: {
+      type: String,
+      required: false,
+      default: null,
+      select: false,
+    },
+    googleCalendarRefreshToken: {
+      type: String,
+      required: false,
+      default: null,
+      select: false,
+    },
+    googleCalendarTokenExpiryDate: {
+      type: Date,
+      required: false,
+      default: null,
+      select: false,
+    },
+    googleCalendarScope: {
+      type: String,
+      required: false,
+      default: null,
+      select: false,
+    },
   },
   { timestamps: true, versionKey: false },
 );

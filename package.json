@@ -10,8 +10,7 @@
     "prod": "env-cmd -f .env.production node src/index.js",
     "start": "node src/index.js",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "prepare": "husky install"
+    "lint:fix": "eslint --fix ."
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -19,6 +18,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "googleapis": "^171.4.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "maildev": "^2.2.1",

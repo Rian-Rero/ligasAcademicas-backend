@@ -34,6 +34,17 @@ const EventSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  googleCalendarEventId: {
+    type: String,
+    required: false,
+    default: null,
+  },
+  googleCalendarUserId: {
+    type: ObjectId,
+    ref: COLLECTION_NAMES.USER,
+    required: false,
+    default: null,
+  },
 });
 
 const EventModel = mongoose.model(COLLECTION_NAMES.EVENT, EventSchema);

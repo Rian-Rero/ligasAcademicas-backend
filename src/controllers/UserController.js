@@ -1,4 +1,7 @@
 import * as EmailHandler from '../mail/handlers.js';
+import { BadRequest } from '../errors/baseErrors.js';
+import * as GoogleCalendarService from '../services/GoogleCalendarService.js';
+import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
 import * as UserService from '../services/UserService.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
 import { SUCCESS_CODES } from '../utils/general/constants.js';
@@ -8,6 +11,26 @@ import {
 } from '../utils/libs/jwt.js';
 import { generateTemporaryPassword } from '../utils/libs/randomPassword.js';
 import * as UserValidator from '../validators/UserValidator.js';
+import { hasManagerRole } from '../utils/general/hasManagerRole.js';
+
+async function getGoogleCalendarRedirectPath(userId) {
+  const user = await UserService.getById(userId);
+  if (hasManagerRole(user?.globalRole)) return '/manager/profile';
+
+  const memberships = await LeagueMembershipModel.find({
+    user: userId,
+    isActive: true,
+  })
+    .select({ role: 1 })
+    .lean()
+    .exec();
+
+  const canAccessManager = memberships.some((membership) =>
+    hasManagerRole(membership?.role),
+  );
+
+  return canAccessManager ? '/manager/profile' : '/student/profile';
+}
 
 export const get = asyncHandler(async (req, res) => {
   const inputFilters = UserValidator.get(req);
@@ -135,4 +158,54 @@ export const changePassword = asyncHandler(async (req, res) => {
   });
 
   res.status(SUCCESS_CODES.OK).json(updatedUser.name);
+});
+
+export const getGoogleCalendarLinkUrl = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.getGoogleCalendarLinkUrl(req);
+
+  const authUrl = GoogleCalendarService.getGoogleAuthorizationUrl(_id);
+  res.status(SUCCESS_CODES.OK).json({ authUrl });
+});
+
+export const handleGoogleCalendarCallback = asyncHandler(async (req, res) => {
+  const { code, state } = UserValidator.handleGoogleCalendarCallback(req);
+
+  const frontendUrl = (
+    process.env.FRONTEND_URL || 'http://localhost:5173'
+  ).replace(/\/$/, '');
+
+  try {
+    const { userId, googleEmail, tokenData } =
+      await GoogleCalendarService.resolveGoogleCallback({ code, state });
+
+    await UserService.linkGoogleCalendar({
+      _id: userId,
+      googleEmail,
+      tokenData,
+    });
+
+    const redirectPath = await getGoogleCalendarRedirectPath(userId);
+    res.redirect(`${frontendUrl}${redirectPath}?googleCalendar=linked`);
+  } catch (error) {
+    const normalizedError =
+      error instanceof BadRequest
+        ? error
+        : new BadRequest('Google account linking failed');
+
+    const redirectPath =
+      normalizedError.message === 'Google account linking failed'
+        ? '/profile'
+        : '/profile';
+
+    res.redirect(
+      `${frontendUrl}${redirectPath}?googleCalendar=error&message=${encodeURIComponent(normalizedError.message)}`,
+    );
+  }
+});
+
+export const unlinkGoogleCalendar = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.unlinkGoogleCalendar(req);
+  const updatedUser = await UserService.unlinkGoogleCalendar(_id);
+
+  res.status(SUCCESS_CODES.OK).json(updatedUser);
 });
