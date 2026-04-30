@@ -10,6 +10,7 @@ import {
   signForgotPasswordJwt,
 } from '../utils/libs/jwt.js';
 import { comparePasswords } from '../utils/libs/bcrypt.js';
+import cloudinary from '../utils/libs/cloudinary/index.js';
 
 function sanitizeGoogleTokens(userLike) {
   const user =
@@ -60,6 +61,23 @@ export async function update({ _id, inputData }) {
   if (!foundUser) throw new NotFoundError('User not found');
 
   return foundUser.set(inputData).save();
+}
+
+export async function uploadProfilePhoto({ _id, file }) {
+  const foundUser = await UserModel.findById(_id).exec();
+  if (!foundUser) throw new NotFoundError('User not found');
+
+  const extension = file.mimetype?.split('/')[1] || 'jpg';
+  const publicId = `users/profile/${_id}`;
+
+  const { url } = await cloudinary.uploadFile({
+    fileBuffer: file.buffer,
+    fileName: `${_id}.${extension}`,
+    publicId,
+    resourceType: 'image',
+  });
+
+  return foundUser.set({ imageURL: url }).save();
 }
 
 export async function linkGoogleCalendar({ _id, googleEmail, tokenData }) {

@@ -90,6 +90,21 @@ export const update = asyncHandler(async (req, res) => {
   res.status(SUCCESS_CODES.OK).json(updatedUser);
 });
 
+export const uploadProfilePhoto = asyncHandler(async (req, res) => {
+  const { _id } = UserValidator.uploadProfilePhoto(req);
+
+  if (!req.file) {
+    throw new BadRequest('Profile image file is required in field "image"');
+  }
+
+  const updatedUser = await UserService.uploadProfilePhoto({
+    _id,
+    file: req.file,
+  });
+
+  res.status(SUCCESS_CODES.OK).json(updatedUser);
+});
+
 export const updateByManagement = asyncHandler(async (req, res) => {
   const { _id, ...inputData } = UserValidator.updateByManagement(req);
   const updatedUser = await UserService.update({ _id, inputData });

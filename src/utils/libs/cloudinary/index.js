@@ -17,14 +17,25 @@ if (process.env.CLOUDINARY_URL) {
 
 export async function uploadFile({
   filePath,
+  fileBuffer,
+  fileName,
   publicId,
   resourceType = 'image',
 }) {
   if (isDevEnvironment) {
-    // In dev we keep files in temp/uploads and return a simulated public id and url
-    const fileName = path.basename(filePath);
-    const key = publicId || fileName;
-    const url = `/temp/uploads/${encodeURIComponent(fileName)}`;
+    // In dev we persist uploads locally and return a local URL.
+    const resolvedFileName = fileName || path.basename(filePath || publicId);
+    const uploadsDir = path.resolve(process.cwd(), 'temp/uploads');
+
+    await fs.mkdir(uploadsDir, { recursive: true });
+
+    const localPath = path.resolve(uploadsDir, resolvedFileName);
+    if (fileBuffer) {
+      await fs.writeFile(localPath, fileBuffer);
+    }
+
+    const key = publicId || resolvedFileName;
+    const url = `/temp/uploads/${encodeURIComponent(resolvedFileName)}`;
     return { key, url };
   }
 
@@ -34,6 +45,26 @@ export async function uploadFile({
     overwrite: true,
     folder: process.env.CLOUDINARY_FOLDER || undefined,
   };
+
+  if (fileBuffer) {
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        options,
+        (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve(result);
+        },
+      );
+
+      stream.end(fileBuffer);
+    });
+
+    return { key: uploadResult.public_id, url: uploadResult.secure_url };
+  }
 
   const result = await cloudinary.uploader.upload(filePath, options);
   return { key: result.public_id, url: result.secure_url };

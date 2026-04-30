@@ -130,6 +130,14 @@ export const update = validate(
   }),
 );
 
+export const uploadProfilePhoto = validate(
+  z.object({
+    params: z.object({
+      _id: objectIdSchema('User _id'),
+    }),
+  }),
+);
+
 export const updateByManagement = validate(
   z.object({
     body: z.object({

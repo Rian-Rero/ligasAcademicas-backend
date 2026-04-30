@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as UserController from '../controllers/UserController.js';
+import uploadUserProfilePhoto from '../middleware/uploadUserProfilePhoto.js';
 import verifyManagement from '../middleware/verifyManagement.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import verifyOwnUser from '../middleware/verifyOwnUser.js';
@@ -42,6 +43,13 @@ UserRoutes.post(
   verifyJWT,
   verifyManagement,
   UserController.resetPasswordByManagement,
+);
+UserRoutes.put(
+  '/:_id/profile-photo',
+  verifyJWT,
+  verifyOwnUser,
+  uploadUserProfilePhoto,
+  UserController.uploadProfilePhoto,
 );
 
 UserRoutes.route('/:_id')
