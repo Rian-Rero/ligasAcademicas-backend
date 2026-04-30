@@ -1,9 +1,9 @@
 import { ForbiddenError } from '../errors/baseErrors.js';
 import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
+import { MANAGER_ROLE_KEYWORDS } from '../utils/general/constants.js';
 
-const MANAGEMENT_ROLE_VALUES = ['admin', 'president'];
-const MANAGEMENT_ROLE_PATTERNS = MANAGEMENT_ROLE_VALUES.map(
+const MANAGEMENT_ROLE_PATTERNS = MANAGER_ROLE_KEYWORDS.map(
   (role) => new RegExp(`^${role}$`, 'i'),
 );
 
