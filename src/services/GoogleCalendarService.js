@@ -121,6 +121,9 @@ function buildGoogleEventBody(event) {
     summary: event.title,
     description: event.description,
     location: event.location,
+    ...(Array.isArray(event.attendees) && event.attendees.length
+      ? { attendees: event.attendees }
+      : {}),
     start: {
       dateTime: startsAt.toISOString(),
     },
@@ -142,6 +145,7 @@ export async function createGoogleCalendarEvent({ userTokens, event }) {
     await getCalendarClient(userTokens);
   const { data } = await calendar.events.insert({
     calendarId: 'primary',
+    sendUpdates: 'all',
     requestBody: buildGoogleEventBody(event),
   });
 
@@ -162,6 +166,7 @@ export async function updateGoogleCalendarEvent({
   await calendar.events.patch({
     calendarId: 'primary',
     eventId: googleEventId,
+    sendUpdates: 'all',
     requestBody: buildGoogleEventBody(event),
   });
 

@@ -6,6 +6,7 @@ import {
 import AcademicLeagueModel from '../models/AcademicLeagueModel.js';
 import AttendanceModel from '../models/Attendance.js';
 import EventModel from '../models/EventModel.js';
+import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
 import SquadModel from '../models/SquadModel.js';
 import UserModel from '../models/UserModel.js';
 import * as GoogleCalendarService from './GoogleCalendarService.js';
@@ -35,10 +36,70 @@ async function getUserWithGoogleTokens(userId) {
 
   return UserModel.findById(userId)
     .select(
-      '+googleCalendarAccessToken +googleCalendarRefreshToken +googleCalendarTokenExpiryDate +googleCalendarScope',
+      '+googleCalendarLinked +googleCalendarAccessToken +googleCalendarRefreshToken +googleCalendarTokenExpiryDate +googleCalendarScope',
     )
     .lean()
     .exec();
+}
+
+async function getEventAudience({ academicLeague, squad }) {
+  const membershipFilters = {
+    academicLeague,
+    isActive: true,
+  };
+
+  if (squad) {
+    membershipFilters.squad = squad;
+  }
+
+  const memberships = await LeagueMembershipModel.find(membershipFilters)
+    .select({ user: 1 })
+    .lean()
+    .exec();
+
+  const userIds = [
+    ...new Set(
+      memberships
+        .map((membership) => membership.user?.toString())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!userIds.length) {
+    return { attendees: [], userIds: [] };
+  }
+
+  const users = await UserModel.find({ _id: { $in: userIds } })
+    .select({ email: 1, name: 1 })
+    .lean()
+    .exec();
+
+  return {
+    attendees: users
+      .map((user) => ({
+        email: user.email,
+        displayName: user.name || undefined,
+      }))
+      .filter((attendee) => attendee.email),
+    userIds,
+  };
+}
+
+async function getGoogleCalendarOwnerUserId({ actorUserId, userIds }) {
+  const candidateIds = [actorUserId, ...userIds].filter(Boolean);
+
+  if (!candidateIds.length) return null;
+
+  const foundUser = await UserModel.findOne({
+    _id: { $in: candidateIds },
+    googleCalendarLinked: true,
+    googleCalendarRefreshToken: { $ne: null },
+  })
+    .select({ _id: 1 })
+    .lean()
+    .exec();
+
+  return foundUser?._id?.toString() || null;
 }
 
 function ensureGoogleIsLinked(userData) {
@@ -103,25 +164,33 @@ export async function create({ inputData, actorUserId }) {
   }
 
   const createdEvent = await EventModel.create(inputData);
+  const { attendees, userIds } = await getEventAudience({
+    academicLeague: inputData.academicLeague,
+    squad: inputData.squad,
+  });
+  const googleCalendarOwnerUserId = await getGoogleCalendarOwnerUserId({
+    actorUserId,
+    userIds,
+  });
 
-  if (!actorUserId) return createdEvent.toObject();
+  if (!googleCalendarOwnerUserId) return createdEvent.toObject();
 
-  const actorUser = await getUserWithGoogleTokens(actorUserId);
+  const actorUser = await getUserWithGoogleTokens(googleCalendarOwnerUserId);
   if (!ensureGoogleIsLinked(actorUser)) return createdEvent.toObject();
 
   try {
     const { googleEventId, refreshedTokenData } =
       await GoogleCalendarService.createGoogleCalendarEvent({
         userTokens: actorUser,
-        event: createdEvent,
+        event: { ...createdEvent.toObject(), attendees },
       });
 
     createdEvent.googleCalendarEventId = googleEventId;
-    createdEvent.googleCalendarUserId = actorUserId;
+    createdEvent.googleCalendarUserId = googleCalendarOwnerUserId;
 
     await Promise.all([
       createdEvent.save(),
-      persistRefreshedUserTokens(actorUserId, refreshedTokenData),
+      persistRefreshedUserTokens(googleCalendarOwnerUserId, refreshedTokenData),
     ]);
 
     return createdEvent.toObject();
@@ -183,23 +252,34 @@ export async function update({ _id, inputData, actorUserId }) {
   }
 
   const nextEvent = composeNextEventData(foundEvent, inputData);
+  const { attendees: nextAttendees, userIds: nextAudienceUserIds } =
+    await getEventAudience({
+      academicLeague: nextEvent.academicLeague,
+      squad: nextEvent.squad,
+    });
+  const googleCalendarOwnerUserId =
+    foundEvent.googleCalendarUserId ||
+    (await getGoogleCalendarOwnerUserId({
+      actorUserId,
+      userIds: nextAudienceUserIds,
+    }));
   const googleSyncPatch = {};
 
-  if (foundEvent.googleCalendarEventId && foundEvent.googleCalendarUserId) {
+  if (foundEvent.googleCalendarEventId && googleCalendarOwnerUserId) {
     const googleOwner = await getUserWithGoogleTokens(
-      foundEvent.googleCalendarUserId,
+      googleCalendarOwnerUserId,
     );
     if (ensureGoogleIsLinked(googleOwner)) {
       try {
         const { refreshedTokenData } =
           await GoogleCalendarService.updateGoogleCalendarEvent({
             userTokens: googleOwner,
-            event: nextEvent,
+            event: { ...nextEvent, attendees: nextAttendees },
             googleEventId: foundEvent.googleCalendarEventId,
           });
 
         await persistRefreshedUserTokens(
-          foundEvent.googleCalendarUserId,
+          googleCalendarOwnerUserId,
           refreshedTokenData,
         );
       } catch (error) {
@@ -216,7 +296,7 @@ export async function update({ _id, inputData, actorUserId }) {
         const { googleEventId, refreshedTokenData } =
           await GoogleCalendarService.createGoogleCalendarEvent({
             userTokens: actorUser,
-            event: nextEvent,
+            event: { ...nextEvent, attendees: nextAttendees },
           });
 
         googleSyncPatch.googleCalendarEventId = googleEventId;
