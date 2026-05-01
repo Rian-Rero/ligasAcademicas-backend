@@ -42,9 +42,12 @@ export const COLLECTION_NAMES = {
   ATTENDANCE: 'attendances',
   CERTIFICATE: 'certificates',
   ROLE_HISTORY: 'rolehistories',
+  PERMISSION: 'permissions',
+  ROLE: 'roles',
+  USER_PERMISSION: 'userpermissions',
 };
 
-export const MANAGER_ROLE_KEYWORDS = ['admin'];
+export const MANAGER_ROLE_KEYWORDS = ['admin', 'manager'];
 
 export const PICTURES_CONFIG = {
   fileName: 'Picture',

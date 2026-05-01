@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-import { ObjectId } from '../config/mongo.js';
 import { COLLECTION_NAMES } from '../utils/general/constants.js';
+const { ObjectId } = mongoose.Schema.Types;
 
 const UserPwdTokenSchema = new mongoose.Schema(
   {

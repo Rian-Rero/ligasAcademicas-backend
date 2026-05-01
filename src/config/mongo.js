@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 import { InternalServerError } from '../errors/baseErrors.js';
 import logger from './logger.js';
+import { seedSystemPermissionsAndRoles } from '../utils/general/seedPermissions.js';
 
 mongoose.Promise = global.Promise;
 
@@ -23,6 +24,10 @@ export default async function mongoConfig() {
     logger.info(
       `✅ Established connection with mongodb on ${process.env.MONGO_DATABASE}`,
     );
+
+    // Seed sistema de permissões
+    await seedSystemPermissionsAndRoles();
+
     return connection;
   } catch (err) {
     // Se der erro na conexão inicial, lançamos o erro para o handler capturar

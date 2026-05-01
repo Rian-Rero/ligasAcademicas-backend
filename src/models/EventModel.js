@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 import { COLLECTION_NAMES } from '../utils/general/constants.js';
-import { ObjectId } from '../config/mongo.js';
+const { ObjectId } = mongoose.Schema.Types;
 
 const EventSchema = new mongoose.Schema({
   academicLeague: {
