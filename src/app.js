@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'node:path';
 
 import corsOptions from './config/cors.js';
 import { NotFoundError } from './errors/baseErrors.js';
@@ -21,6 +22,15 @@ app.use(cors(corsOptions));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(helmet());
 if (isDevEnvironment) app.use(morgan('dev'));
+
+if (isDevEnvironment) {
+  app.use('/temp', (req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  });
+
+  app.use('/temp', express.static(path.resolve(process.cwd(), 'temp')));
+}
 
 // Routes
 app.use('/sgla-api', routes);
