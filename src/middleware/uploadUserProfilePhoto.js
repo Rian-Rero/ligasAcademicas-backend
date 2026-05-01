@@ -1,21 +1,10 @@
-import multer from 'multer';
+import { PICTURES_CONFIG } from '../utils/general/constants.js';
+import multerConfig from '../utils/libs/multer/multerConfig.js';
 
-import { BadRequest } from '../errors/baseErrors.js';
-
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const FIVE_MB = 5 * 1024 * 1024;
-
-const uploadUserProfilePhoto = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: FIVE_MB },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      cb(new BadRequest('Only JPG, PNG and WEBP images are allowed'));
-      return;
-    }
-
-    cb(null, true);
-  },
+const uploadUserProfilePhoto = multerConfig({
+  allowedMimes: PICTURES_CONFIG.allowedMimeTypes,
+  errorMessage: 'Only JPG, PNG and WEBP images are allowed',
+  sizeLimitInMB: PICTURES_CONFIG.sizeLimitInMB,
 }).single('image');
 
 export default uploadUserProfilePhoto;

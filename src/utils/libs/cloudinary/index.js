@@ -1,18 +1,31 @@
-import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs/promises';
 import path from 'node:path';
 
 import isDevEnvironment from '../../general/isDevEnvironment.js';
+import cloudinary from './config.js';
 
-// Configure cloudinary if env vars are present; prefer CLOUDINARY_URL
-if (process.env.CLOUDINARY_URL) {
-  cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
-} else if (process.env.CLOUDINARY_CLOUD_NAME) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+function getPublicIdFromUrl(fileUrl) {
+  if (!fileUrl) return null;
+
+  if (fileUrl.startsWith('/')) {
+    return decodeURIComponent(path.basename(fileUrl));
+  }
+
+  try {
+    const url = new URL(fileUrl);
+    const uploadPath = url.pathname.split('/upload/')[1];
+
+    if (!uploadPath) return null;
+
+    const publicIdWithExtension = uploadPath.replace(/^v\d+\//, '');
+    const lastDotIndex = publicIdWithExtension.lastIndexOf('.');
+
+    return lastDotIndex > 0
+      ? publicIdWithExtension.slice(0, lastDotIndex)
+      : publicIdWithExtension;
+  } catch {
+    return null;
+  }
 }
 
 export async function uploadFile({
@@ -101,7 +114,15 @@ export async function deleteFile(key, resourceType = 'image') {
   return res;
 }
 
+export async function deleteFileByUrl(fileUrl, resourceType = 'image') {
+  const key = getPublicIdFromUrl(fileUrl);
+  if (!key) return null;
+
+  return deleteFile(key, resourceType);
+}
+
 export default {
   uploadFile,
   deleteFile,
+  deleteFileByUrl,
 };

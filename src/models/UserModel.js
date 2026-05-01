@@ -1,8 +1,30 @@
 import mongoose from 'mongoose';
 
 import { COLLECTION_NAMES } from '../utils/general/constants.js';
+import cloudinary from '../utils/libs/cloudinary/index.js';
 import { hashPassword } from '../utils/libs/bcrypt.js';
 import UserSessionTokenModel from './UserSessionTokenModel.js';
+
+async function deleteUserSessionTokens(userId) {
+  if (!userId) return null;
+
+  return UserSessionTokenModel.deleteMany({ user: userId }).exec();
+}
+
+async function deleteUserProfileImage(user) {
+  if (!user?.imageURL) return null;
+
+  return cloudinary.deleteFileByUrl(user.imageURL);
+}
+
+async function deleteUserRelatedData(user) {
+  if (!user?._id) return null;
+
+  return Promise.all([
+    deleteUserSessionTokens(user._id),
+    deleteUserProfileImage(user),
+  ]);
+}
 
 const UserSchema = new mongoose.Schema(
   {
@@ -99,11 +121,31 @@ UserSchema.pre(
   'deleteOne',
   { document: true, query: false }, // More details on https://mongoosejs.com/docs/api/schema.html#schema_Schema-pre
   async function () {
-    return Promise.all([
-      UserSessionTokenModel.deleteMany({ user: this._id }).exec(),
-    ]);
+    return deleteUserRelatedData(this);
   },
 );
+
+UserSchema.pre(
+  'deleteOne',
+  { document: false, query: true },
+  async function () {
+    const foundUser = await this.model
+      .findOne(this.getQuery())
+      .select({ imageURL: 1 })
+      .exec();
+
+    return deleteUserRelatedData(foundUser);
+  },
+);
+
+UserSchema.pre('findOneAndDelete', async function () {
+  const foundUser = await this.model
+    .findOne(this.getQuery())
+    .select({ imageURL: 1 })
+    .exec();
+
+  return deleteUserRelatedData(foundUser);
+});
 
 const UserModel = mongoose.model(COLLECTION_NAMES.USER, UserSchema);
 export default UserModel;

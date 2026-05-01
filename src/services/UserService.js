@@ -67,17 +67,29 @@ export async function uploadProfilePhoto({ _id, file }) {
   const foundUser = await UserModel.findById(_id).exec();
   if (!foundUser) throw new NotFoundError('User not found');
 
+  const previousImageURL = foundUser.imageURL;
   const extension = file.mimetype?.split('/')[1] || 'jpg';
   const publicId = `users/profile/${_id}`;
 
-  const { url } = await cloudinary.uploadFile({
+  const { key, url } = await cloudinary.uploadFile({
     fileBuffer: file.buffer,
     fileName: `${_id}.${extension}`,
     publicId,
     resourceType: 'image',
   });
 
-  return foundUser.set({ imageURL: url }).save();
+  try {
+    const updatedUser = await foundUser.set({ imageURL: url }).save();
+
+    if (previousImageURL && previousImageURL !== updatedUser.imageURL) {
+      await cloudinary.deleteFileByUrl(previousImageURL);
+    }
+
+    return updatedUser;
+  } catch (error) {
+    await cloudinary.deleteFile(key);
+    throw error;
+  }
 }
 
 export async function linkGoogleCalendar({ _id, googleEmail, tokenData }) {
