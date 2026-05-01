@@ -88,6 +88,12 @@ router.get(
   verifyPermissionAdmin,
   UserPermissionController.getUserPermissions,
 );
+router.get(
+  '/users/:userId/permissions/details',
+  verifyJWT,
+  verifyPermissionAdmin,
+  UserPermissionController.getUserPermissionDetails,
+);
 router.patch(
   '/users/:userId/permissions',
   verifyJWT,

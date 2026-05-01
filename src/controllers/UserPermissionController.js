@@ -15,6 +15,18 @@ export const getUserPermissions = asyncHandler(async (req, res) => {
   res.status(SUCCESS_CODES.OK).json(permissions);
 });
 
+export const getUserPermissionDetails = asyncHandler(async (req, res) => {
+  const { userId } = UserPermissionValidator.getUserPermissionDetails(req);
+  const { academicLeague } = req.query;
+
+  const userPermission = await UserPermissionService.getUserPermissionDetails(
+    userId,
+    academicLeague || null,
+  );
+
+  res.status(SUCCESS_CODES.OK).json(userPermission);
+});
+
 export const updateUserPermissions = asyncHandler(async (req, res) => {
   const validated = UserPermissionValidator.updateUserPermissions(req);
   const { userId, roles, permissions, academicLeague } = validated;
@@ -57,9 +69,10 @@ export const addPermissionToUser = asyncHandler(async (req, res) => {
   const validated = UserPermissionValidator.addPermissionToUser(req);
   const { userId, permissionId, academicLeague } = validated;
 
-  const updatedPermissions = await UserPermissionService.updateUserPermissions(
+  const updatedPermissions = await UserPermissionService.addPermissionToUser(
     userId,
-    { permissions: [permissionId], academicLeague },
+    permissionId,
+    academicLeague,
   );
 
   res.status(SUCCESS_CODES.OK).json(updatedPermissions);
@@ -69,17 +82,11 @@ export const removePermissionFromUser = asyncHandler(async (req, res) => {
   const validated = UserPermissionValidator.removePermissionFromUser(req);
   const { userId, permissionId, academicLeague } = validated;
 
-  const userPermission = await UserPermissionService.updateUserPermissions(
+  const userPermission = await UserPermissionService.removePermissionFromUser(
     userId,
-    { academicLeague },
+    permissionId,
+    academicLeague,
   );
-
-  // Remover a permissão
-  if (userPermission?.permissions) {
-    userPermission.permissions = userPermission.permissions.filter(
-      (id) => id.toString() !== permissionId.toString(),
-    );
-  }
 
   res.status(SUCCESS_CODES.OK).json(userPermission);
 });

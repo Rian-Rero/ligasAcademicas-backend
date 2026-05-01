@@ -10,6 +10,8 @@ export const getUserPermissions = validate(
   }),
 );
 
+export const getUserPermissionDetails = getUserPermissions;
+
 export const updateUserPermissions = validate(
   z.object({
     params: z.object({

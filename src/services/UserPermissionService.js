@@ -4,6 +4,43 @@ import RoleModel from '../models/RoleModel.js';
 import PermissionModel from '../models/PermissionModel.js';
 import { NotFoundError } from '../errors/baseErrors.js';
 
+const populateUserPermissionQuery = (query) =>
+  UserPermissionModel.findOne(query)
+    .populate({
+      path: 'roles',
+      populate: 'permissions',
+    })
+    .populate('permissions')
+    .lean()
+    .exec();
+
+const buildUserPermissionQuery = (userId, academicLeague = null) => {
+  const query = { user: userId };
+
+  if (academicLeague) {
+    query.academicLeague = academicLeague;
+  } else {
+    query.academicLeague = null;
+  }
+
+  return query;
+};
+
+export const getUserPermissionDetails = async (
+  userId,
+  academicLeague = null,
+) => {
+  const user = await UserModel.findById(userId).lean().exec();
+
+  if (!user) {
+    throw new NotFoundError('Usuário não encontrado');
+  }
+
+  const query = buildUserPermissionQuery(userId, academicLeague);
+
+  return populateUserPermissionQuery(query);
+};
+
 /**
  * Obter permissões de um usuário (combinando papéis e permissões diretas)
  */
@@ -107,12 +144,7 @@ export const updateUserPermissions = async (
     throw new NotFoundError('Usuário não encontrado');
   }
 
-  const query = { user: userId };
-  if (academicLeague) {
-    query.academicLeague = academicLeague;
-  } else {
-    query.academicLeague = null;
-  }
+  const query = buildUserPermissionQuery(userId, academicLeague);
 
   let userPermission = await UserPermissionModel.findOne(query).exec();
 
@@ -129,14 +161,7 @@ export const updateUserPermissions = async (
     await userPermission.save();
   }
 
-  return UserPermissionModel.findById(userPermission._id)
-    .populate({
-      path: 'roles',
-      populate: 'permissions',
-    })
-    .populate('permissions')
-    .lean()
-    .exec();
+  return populateUserPermissionQuery({ _id: userPermission._id });
 };
 
 /**
@@ -155,12 +180,7 @@ export const addRoleToUser = async (userId, roleId, academicLeague = null) => {
     throw new NotFoundError('Papel não encontrado');
   }
 
-  const query = { user: userId };
-  if (academicLeague) {
-    query.academicLeague = academicLeague;
-  } else {
-    query.academicLeague = null;
-  }
+  const query = buildUserPermissionQuery(userId, academicLeague);
 
   let userPermission = await UserPermissionModel.findOne(query).exec();
 
@@ -176,14 +196,7 @@ export const addRoleToUser = async (userId, roleId, academicLeague = null) => {
     await userPermission.save();
   }
 
-  return UserPermissionModel.findById(userPermission._id)
-    .populate({
-      path: 'roles',
-      populate: 'permissions',
-    })
-    .populate('permissions')
-    .lean()
-    .exec();
+  return populateUserPermissionQuery({ _id: userPermission._id });
 };
 
 /**
@@ -200,12 +213,7 @@ export const removeRoleFromUser = async (
     throw new NotFoundError('Usuário não encontrado');
   }
 
-  const query = { user: userId };
-  if (academicLeague) {
-    query.academicLeague = academicLeague;
-  } else {
-    query.academicLeague = null;
-  }
+  const query = buildUserPermissionQuery(userId, academicLeague);
 
   const userPermission = await UserPermissionModel.findOne(query).exec();
 
@@ -216,12 +224,80 @@ export const removeRoleFromUser = async (
     await userPermission.save();
   }
 
-  return UserPermissionModel.findById(userPermission?._id)
-    .populate({
-      path: 'roles',
-      populate: 'permissions',
-    })
-    .populate('permissions')
-    .lean()
-    .exec();
+  return userPermission?._id
+    ? populateUserPermissionQuery({ _id: userPermission._id })
+    : null;
+};
+
+/**
+ * Adicionar permissão direta a um usuário
+ */
+export const addPermissionToUser = async (
+  userId,
+  permissionId,
+  academicLeague = null,
+) => {
+  const user = await UserModel.findById(userId).lean().exec();
+
+  if (!user) {
+    throw new NotFoundError('Usuário não encontrado');
+  }
+
+  const permission = await PermissionModel.findById(permissionId).lean().exec();
+
+  if (!permission) {
+    throw new NotFoundError('Permissão não encontrada');
+  }
+
+  const query = buildUserPermissionQuery(userId, academicLeague);
+
+  let userPermission = await UserPermissionModel.findOne(query).exec();
+
+  if (!userPermission) {
+    userPermission = await UserPermissionModel.create({
+      user: userId,
+      roles: [],
+      permissions: [permissionId],
+      academicLeague: academicLeague || null,
+    });
+  } else if (
+    !userPermission.permissions.some(
+      (id) => id.toString() === permissionId.toString(),
+    )
+  ) {
+    userPermission.permissions.push(permissionId);
+    await userPermission.save();
+  }
+
+  return populateUserPermissionQuery({ _id: userPermission._id });
+};
+
+/**
+ * Remover permissão direta de um usuário
+ */
+export const removePermissionFromUser = async (
+  userId,
+  permissionId,
+  academicLeague = null,
+) => {
+  const user = await UserModel.findById(userId).lean().exec();
+
+  if (!user) {
+    throw new NotFoundError('Usuário não encontrado');
+  }
+
+  const query = buildUserPermissionQuery(userId, academicLeague);
+
+  const userPermission = await UserPermissionModel.findOne(query).exec();
+
+  if (userPermission) {
+    userPermission.permissions = userPermission.permissions.filter(
+      (id) => id.toString() !== permissionId.toString(),
+    );
+    await userPermission.save();
+  }
+
+  return userPermission?._id
+    ? populateUserPermissionQuery({ _id: userPermission._id })
+    : null;
 };
