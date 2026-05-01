@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { COLLECTION_NAMES } from '../utils/general/constants.js';
 import cloudinary from '../utils/libs/cloudinary/index.js';
 import { hashPassword } from '../utils/libs/bcrypt.js';
+import CloudinaryFileSchema from '../utils/libs/mongoose/subdocuments/CloudinaryFileSchema.js';
 import UserSessionTokenModel from './UserSessionTokenModel.js';
 
 async function deleteUserSessionTokens(userId) {
@@ -12,7 +13,13 @@ async function deleteUserSessionTokens(userId) {
 }
 
 async function deleteUserProfileImage(user) {
-  if (!user?.imageURL) return null;
+  if (!user) return null;
+
+  if (user.image?.key) {
+    return cloudinary.deleteFile(user.image.key);
+  }
+
+  if (!user.imageURL) return null;
 
   return cloudinary.deleteFileByUrl(user.imageURL);
 }
@@ -49,6 +56,11 @@ const UserSchema = new mongoose.Schema(
     imageURL: {
       type: String,
       required: false,
+    },
+    image: {
+      type: CloudinaryFileSchema,
+      required: false,
+      default: undefined,
     },
     globalRole: {
       type: String,
@@ -131,7 +143,7 @@ UserSchema.pre(
   async function () {
     const foundUser = await this.model
       .findOne(this.getQuery())
-      .select({ imageURL: 1 })
+      .select({ imageURL: 1, image: 1 })
       .exec();
 
     return deleteUserRelatedData(foundUser);
@@ -141,7 +153,7 @@ UserSchema.pre(
 UserSchema.pre('findOneAndDelete', async function () {
   const foundUser = await this.model
     .findOne(this.getQuery())
-    .select({ imageURL: 1 })
+    .select({ imageURL: 1, image: 1 })
     .exec();
 
   return deleteUserRelatedData(foundUser);

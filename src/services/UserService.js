@@ -10,6 +10,7 @@ import {
   signForgotPasswordJwt,
 } from '../utils/libs/jwt.js';
 import { comparePasswords } from '../utils/libs/bcrypt.js';
+import { cloudinaryFileSchema } from '../utils/libs/zod/cloudinaryFileSchemas.js';
 import cloudinary from '../utils/libs/cloudinary/index.js';
 
 function sanitizeGoogleTokens(userLike) {
@@ -67,6 +68,7 @@ export async function uploadProfilePhoto({ _id, file }) {
   const foundUser = await UserModel.findById(_id).exec();
   if (!foundUser) throw new NotFoundError('User not found');
 
+  const previousImageKey = foundUser.image?.key;
   const previousImageURL = foundUser.imageURL;
   const extension = file.mimetype?.split('/')[1] || 'jpg';
   const publicId = `users/profile/${_id}`;
@@ -77,11 +79,19 @@ export async function uploadProfilePhoto({ _id, file }) {
     publicId,
     resourceType: 'image',
   });
+  const uploadedImage = cloudinaryFileSchema.parse({ key, url });
 
   try {
-    const updatedUser = await foundUser.set({ imageURL: url }).save();
+    const updatedUser = await foundUser
+      .set({
+        imageURL: uploadedImage.url,
+        image: uploadedImage,
+      })
+      .save();
 
-    if (previousImageURL && previousImageURL !== updatedUser.imageURL) {
+    if (previousImageKey && previousImageKey !== uploadedImage.key) {
+      await cloudinary.deleteFile(previousImageKey);
+    } else if (previousImageURL && previousImageURL !== updatedUser.imageURL) {
       await cloudinary.deleteFileByUrl(previousImageURL);
     }
 

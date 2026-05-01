@@ -83,6 +83,10 @@ export async function uploadFile({
   return { key: result.public_id, url: result.secure_url };
 }
 
+export async function uploadFiles(files, options = {}) {
+  return Promise.all(files.map((file) => uploadFile({ ...file, ...options })));
+}
+
 export async function deleteFile(key, resourceType = 'image') {
   if (!key) return null;
 
@@ -114,6 +118,10 @@ export async function deleteFile(key, resourceType = 'image') {
   return res;
 }
 
+export async function deleteFiles(keys, resourceType = 'image') {
+  return Promise.all(keys.map((key) => deleteFile(key, resourceType)));
+}
+
 export async function deleteFileByUrl(fileUrl, resourceType = 'image') {
   const key = getPublicIdFromUrl(fileUrl);
   if (!key) return null;
@@ -123,6 +131,8 @@ export async function deleteFileByUrl(fileUrl, resourceType = 'image') {
 
 export default {
   uploadFile,
+  uploadFiles,
   deleteFile,
+  deleteFiles,
   deleteFileByUrl,
 };

@@ -45,3 +45,15 @@ export const COLLECTION_NAMES = {
 };
 
 export const MANAGER_ROLE_KEYWORDS = ['admin'];
+
+export const PICTURES_CONFIG = {
+  fileName: 'Picture',
+  allowedMimeTypes: [
+    'image/jpeg',
+    'image/pjpeg',
+    'image/png',
+    'image/webp',
+    'image/jpg',
+  ],
+  sizeLimitInMB: 5,
+};
