@@ -203,3 +203,25 @@ export async function destroy(_id) {
 
   await foundLeagueMembership.deleteOne();
 }
+
+export async function end(_id) {
+  const foundLeagueMembership =
+    await LeagueMembershipModel.findById(_id).exec();
+  if (!foundLeagueMembership)
+    throw new NotFoundError('League membership not found');
+
+  if (!foundLeagueMembership.isActive)
+    throw new ConflictError('League membership already inactive');
+
+  const startDate = foundLeagueMembership.createdAt || new Date();
+
+  await RoleHistoryModel.create({
+    leagueMembership: _id,
+    squad: foundLeagueMembership.squad,
+    startDate,
+    endDate: new Date(),
+  });
+
+  foundLeagueMembership.isActive = false;
+  return foundLeagueMembership.save();
+}

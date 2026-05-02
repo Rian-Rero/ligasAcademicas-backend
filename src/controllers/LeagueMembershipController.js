@@ -40,3 +40,10 @@ export const destroy = asyncHandler(async (req, res) => {
 
   res.sendStatus(SUCCESS_CODES.NO_CONTENT);
 });
+
+export const end = asyncHandler(async (req, res) => {
+  const { _id } = LeagueMembershipValidator.getById(req);
+  const updatedLeagueMembership = await LeagueMembershipService.end(_id);
+
+  res.status(SUCCESS_CODES.OK).json(updatedLeagueMembership);
+});

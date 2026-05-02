@@ -13,4 +13,6 @@ LeagueMembershipRoutes.route('/:_id')
   .patch(LeagueMembershipController.update)
   .delete(LeagueMembershipController.destroy);
 
+LeagueMembershipRoutes.route('/:_id/end').patch(LeagueMembershipController.end);
+
 export default LeagueMembershipRoutes;
