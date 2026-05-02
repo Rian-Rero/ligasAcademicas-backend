@@ -2,6 +2,7 @@ import * as EmailHandler from '../mail/handlers.js';
 import { BadRequest } from '../errors/baseErrors.js';
 import * as GoogleCalendarService from '../services/GoogleCalendarService.js';
 import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
+import * as UserPermissionService from '../services/UserPermissionService.js';
 import * as UserService from '../services/UserService.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
 import { SUCCESS_CODES } from '../utils/general/constants.js';
@@ -15,7 +16,13 @@ import { hasManagerRole } from '../utils/general/hasManagerRole.js';
 
 async function getGoogleCalendarRedirectPath(userId) {
   const user = await UserService.getById(userId);
-  if (hasManagerRole(user?.globalRole)) return '/manager/profile';
+  const hasGlobalManagerRole = hasManagerRole(user?.globalRole);
+  const hasAssignedManagerRole = await UserPermissionService.userHasRole(
+    userId,
+    'manager',
+  );
+
+  if (hasGlobalManagerRole || hasAssignedManagerRole) return '/manager/profile';
 
   const memberships = await LeagueMembershipModel.find({
     user: userId,

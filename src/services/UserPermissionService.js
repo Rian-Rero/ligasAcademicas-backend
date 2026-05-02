@@ -41,6 +41,35 @@ export const getUserPermissionDetails = async (
   return populateUserPermissionQuery(query);
 };
 
+export const userHasRole = async (userId, roleKey, academicLeague = null) => {
+  const user = await UserModel.findById(userId).lean().exec();
+
+  if (!user) {
+    throw new NotFoundError('Usuário não encontrado');
+  }
+
+  if (user.globalRole === roleKey) {
+    return true;
+  }
+
+  const query = buildUserPermissionQuery(userId, academicLeague);
+  if (academicLeague) {
+    query.$or = [{ academicLeague: null }, { academicLeague }];
+    delete query.academicLeague;
+  }
+
+  const userPermission = await UserPermissionModel.findOne(query)
+    .populate('roles')
+    .lean()
+    .exec();
+
+  if (!userPermission?.roles?.length) {
+    return false;
+  }
+
+  return userPermission.roles.some((role) => role?.key === roleKey);
+};
+
 /**
  * Obter permissões de um usuário (combinando papéis e permissões diretas)
  */
