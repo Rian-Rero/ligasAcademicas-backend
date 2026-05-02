@@ -62,11 +62,6 @@ const UserSchema = new mongoose.Schema(
       required: false,
       default: undefined,
     },
-    globalRole: {
-      type: String,
-      required: false,
-      default: 'league-member',
-    },
     emailVerified: {
       type: Boolean,
       required: false,

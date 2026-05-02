@@ -15,10 +15,7 @@ export const verifyPermission = (requiredPermission) =>
     }
 
     // Admin tem acesso a tudo
-    if (
-      user.globalRole === 'admin' ||
-      (await UserPermissionService.userHasRole(user._id, 'admin'))
-    ) {
+    if (await UserPermissionService.userHasRole(user._id, 'admin')) {
       next();
       return;
     }
@@ -57,10 +54,7 @@ export const verifyPermissionAdmin = asyncHandler(async (req, res, next) => {
   }
 
   // Admin tem acesso a tudo
-  if (
-    user.globalRole === 'admin' ||
-    (await UserPermissionService.userHasRole(user._id, 'admin'))
-  ) {
+  if (await UserPermissionService.userHasRole(user._id, 'admin')) {
     next();
     return;
   }
@@ -90,10 +84,7 @@ export const verifyAnyPermission = (permissions) =>
     }
 
     // Admin tem acesso a tudo
-    if (
-      user.globalRole === 'admin' ||
-      (await UserPermissionService.userHasRole(user._id, 'admin'))
-    ) {
+    if (await UserPermissionService.userHasRole(user._id, 'admin')) {
       next();
       return;
     }
@@ -132,10 +123,7 @@ export const verifyAllPermissions = (permissions) =>
     }
 
     // Admin tem acesso a tudo
-    if (
-      user.globalRole === 'admin' ||
-      (await UserPermissionService.userHasRole(user._id, 'admin'))
-    ) {
+    if (await UserPermissionService.userHasRole(user._id, 'admin')) {
       next();
       return;
     }

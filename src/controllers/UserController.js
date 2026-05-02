@@ -15,14 +15,17 @@ import * as UserValidator from '../validators/UserValidator.js';
 import { hasManagerRole } from '../utils/general/hasManagerRole.js';
 
 async function getGoogleCalendarRedirectPath(userId) {
-  const user = await UserService.getById(userId);
-  const hasGlobalManagerRole = hasManagerRole(user?.globalRole);
   const hasAssignedManagerRole = await UserPermissionService.userHasRole(
     userId,
     'manager',
   );
+  const hasAssignedAdminRole = await UserPermissionService.userHasRole(
+    userId,
+    'admin',
+  );
 
-  if (hasGlobalManagerRole || hasAssignedManagerRole) return '/manager/profile';
+  if (hasAssignedAdminRole) return '/admin/profile';
+  if (hasAssignedManagerRole) return '/manager/profile';
 
   const memberships = await LeagueMembershipModel.find({
     user: userId,

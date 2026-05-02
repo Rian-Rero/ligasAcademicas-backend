@@ -26,6 +26,23 @@ const buildUserPermissionQuery = (userId, academicLeague = null) => {
   return query;
 };
 
+export const getUserRoleKeys = async (userId, academicLeague = null) => {
+  const user = await UserModel.findById(userId).lean().exec();
+
+  if (!user) {
+    throw new NotFoundError('Usuário não encontrado');
+  }
+
+  const query = buildUserPermissionQuery(userId, academicLeague);
+
+  const userPermission = await UserPermissionModel.findOne(query)
+    .populate('roles')
+    .lean()
+    .exec();
+
+  return userPermission?.roles?.map((role) => role.key).filter(Boolean) || [];
+};
+
 export const getUserPermissionDetails = async (
   userId,
   academicLeague = null,
@@ -48,26 +65,9 @@ export const userHasRole = async (userId, roleKey, academicLeague = null) => {
     throw new NotFoundError('Usuário não encontrado');
   }
 
-  if (user.globalRole === roleKey) {
-    return true;
-  }
+  const roleKeys = await getUserRoleKeys(userId, academicLeague);
 
-  const query = buildUserPermissionQuery(userId, academicLeague);
-  if (academicLeague) {
-    query.$or = [{ academicLeague: null }, { academicLeague }];
-    delete query.academicLeague;
-  }
-
-  const userPermission = await UserPermissionModel.findOne(query)
-    .populate('roles')
-    .lean()
-    .exec();
-
-  if (!userPermission?.roles?.length) {
-    return false;
-  }
-
-  return userPermission.roles.some((role) => role?.key === roleKey);
+  return roleKeys.includes(roleKey);
 };
 
 /**
@@ -81,7 +81,7 @@ export const getUserPermissions = async (userId, academicLeague = null) => {
   }
 
   // Se for admin global, retornar todas as permissões
-  if (user.globalRole === 'admin') {
+  if (await userHasRole(userId, 'admin')) {
     return PermissionModel.find().lean().exec();
   }
 
@@ -151,7 +151,7 @@ export const userHasPermission = async (
   }
 
   // Admin tem todas as permissões
-  if (user.globalRole === 'admin') {
+  if (await userHasRole(userId, 'admin')) {
     return true;
   }
 

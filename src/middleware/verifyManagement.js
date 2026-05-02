@@ -12,7 +12,6 @@ const verifyManagement = asyncHandler(async (req, res, next) => {
   const authUser = req.user;
 
   if (
-    authUser?.globalRole === 'admin' ||
     (await UserPermissionService.userHasRole(authUser?._id, 'admin')) ||
     (await UserPermissionService.userHasRole(authUser?._id, 'manager'))
   ) {

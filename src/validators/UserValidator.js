@@ -8,7 +8,6 @@ export const get = validate(
     query: z.object({
       _id: objectIdSchema('User _id').optional(),
       name: z.string().optional(),
-      globalRole: z.string().optional(),
       emailVerified: z.boolean().optional(),
       email: z.string().optional(),
     }),
@@ -30,7 +29,6 @@ export const create = validate(
         .string({ required_error: 'User name is required' })
         .min(3, 'User name must be at least 3 characters')
         .max(40, 'User name must be a maximum of 40 characters'),
-      globalRole: z.string().default('league-member'),
       emailVerified: z.boolean().default(false),
       email: z.email('User email must be valid'),
       password: z
@@ -147,11 +145,6 @@ export const updateByManagement = validate(
         .max(40, 'User name must be a maximum of 40 characters')
         .optional(),
       email: z.email('User email must be valid').optional(),
-      globalRole: z
-        .string()
-        .min(3, 'User global role must be at least 3 characters')
-        .max(40, 'User global role must be a maximum of 40 characters')
-        .optional(),
       emailVerified: z.boolean().optional(),
       imageURL: z.string().optional(),
     }),

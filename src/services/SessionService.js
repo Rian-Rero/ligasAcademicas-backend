@@ -1,6 +1,7 @@
 import { ForbiddenError, UnauthorizedError } from '../errors/baseErrors.js';
 import UserModel from '../models/UserModel.js';
 import UserSessionTokenModel from '../models/UserSessionTokenModel.js';
+import * as UserPermissionService from './UserPermissionService.js';
 import formatExpiresAt from '../utils/general/formatExpiresAt.js';
 import { comparePasswords } from '../utils/libs/bcrypt.js';
 import { decodeRefreshToken, signSessionJwts } from '../utils/libs/jwt.js';
@@ -12,6 +13,21 @@ const omitSessionFields = (userData) => {
   delete sanitizedData.password;
   return sanitizedData;
 };
+
+async function buildSessionUserData(userData) {
+  const userId = userData?._id?.toString();
+  if (!userId) return omitSessionFields(userData);
+
+  const [baseUserData, roleKeys] = await Promise.all([
+    Promise.resolve(omitSessionFields(userData)),
+    UserPermissionService.getUserRoleKeys(userId),
+  ]);
+
+  return {
+    ...baseUserData,
+    roleKeys,
+  };
+}
 
 export async function processLogin({ email, password, token }) {
   const foundUser = await UserModel.findOne({ email })
@@ -40,7 +56,7 @@ export async function processLogin({ email, password, token }) {
 
   // Takes off only the necessary info about the user
 
-  const tokenUserData = omitSessionFields(foundUser);
+  const tokenUserData = await buildSessionUserData(foundUser);
 
   // Create JWTs
   const { accessToken, refreshToken } = signSessionJwts(tokenUserData);
@@ -80,7 +96,7 @@ export async function processRefreshToken(token) {
   // Refresh token still valid
   await foundToken.deleteOne(); // Invalidate actual refresh token
 
-  const tokenUserData = omitSessionFields(
+  const tokenUserData = await buildSessionUserData(
     foundToken.user.toObject({ virtuals: true }),
   ); // It is necessary to use "toObject" because foundToken is a mongoose document
 

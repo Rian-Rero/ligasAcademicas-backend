@@ -5,6 +5,7 @@ import {
 } from '../errors/baseErrors.js';
 import UserModel from '../models/UserModel.js';
 import UserPwdTokenModel from '../models/UserPwdTokenModel.js';
+import * as UserPermissionService from './UserPermissionService.js';
 import {
   decodeForgotPasswordToken,
   signForgotPasswordJwt,
@@ -27,15 +28,30 @@ function sanitizeGoogleTokens(userLike) {
   return sanitized;
 }
 
+async function attachRoleKeys(userLike) {
+  if (!userLike) return userLike;
+
+  const user =
+    typeof userLike.toObject === 'function' ? userLike.toObject() : userLike;
+  const roleKeys = await UserPermissionService.getUserRoleKeys(user._id);
+
+  return {
+    ...user,
+    roleKeys,
+  };
+}
+
 export async function get(inputFilters) {
-  return UserModel.find(inputFilters).lean().exec();
+  const users = await UserModel.find(inputFilters).lean().exec();
+
+  return Promise.all(users.map((user) => attachRoleKeys(user)));
 }
 
 export async function getById(_id) {
   const foundUser = await UserModel.findById(_id).lean().exec();
   if (!foundUser) throw new NotFoundError('User not found');
 
-  return foundUser;
+  return attachRoleKeys(foundUser);
 }
 
 export async function getByIdWithGoogleTokens(_id) {
