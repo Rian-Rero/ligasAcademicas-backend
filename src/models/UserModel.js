@@ -19,9 +19,7 @@ async function deleteUserProfileImage(user) {
     return cloudinary.deleteFile(user.image.key);
   }
 
-  if (!user.imageURL) return null;
-
-  return cloudinary.deleteFileByUrl(user.imageURL);
+  return null;
 }
 
 async function deleteUserRelatedData(user) {
@@ -52,10 +50,6 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: false,
       select: false,
-    },
-    imageURL: {
-      type: String,
-      required: false,
     },
     image: {
       type: CloudinaryFileSchema,
@@ -138,7 +132,7 @@ UserSchema.pre(
   async function () {
     const foundUser = await this.model
       .findOne(this.getQuery())
-      .select({ imageURL: 1, image: 1 })
+      .select({ image: 1 })
       .exec();
 
     return deleteUserRelatedData(foundUser);
@@ -148,7 +142,7 @@ UserSchema.pre(
 UserSchema.pre('findOneAndDelete', async function () {
   const foundUser = await this.model
     .findOne(this.getQuery())
-    .select({ imageURL: 1, image: 1 })
+    .select({ image: 1 })
     .exec();
 
   return deleteUserRelatedData(foundUser);

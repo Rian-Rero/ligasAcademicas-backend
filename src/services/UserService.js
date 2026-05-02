@@ -85,7 +85,6 @@ export async function uploadProfilePhoto({ _id, file }) {
   if (!foundUser) throw new NotFoundError('User not found');
 
   const previousImageKey = foundUser.image?.key;
-  const previousImageURL = foundUser.imageURL;
   const extension = file.mimetype?.split('/')[1] || 'jpg';
   const publicId = `users/profile/${_id}`;
 
@@ -98,17 +97,10 @@ export async function uploadProfilePhoto({ _id, file }) {
   const uploadedImage = cloudinaryFileSchema.parse({ key, url });
 
   try {
-    const updatedUser = await foundUser
-      .set({
-        imageURL: uploadedImage.url,
-        image: uploadedImage,
-      })
-      .save();
+    const updatedUser = await foundUser.set({ image: uploadedImage }).save();
 
     if (previousImageKey && previousImageKey !== uploadedImage.key) {
       await cloudinary.deleteFile(previousImageKey);
-    } else if (previousImageURL && previousImageURL !== updatedUser.imageURL) {
-      await cloudinary.deleteFileByUrl(previousImageURL);
     }
 
     return updatedUser;

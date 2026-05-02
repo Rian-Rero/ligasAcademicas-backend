@@ -36,7 +36,6 @@ export const create = validate(
         .min(6, 'User password must be at least 6 characters')
         .max(16, 'User password must be a maximum of 16 characters')
         .optional(),
-      imageURL: z.string().optional(),
     }),
   }),
 );
@@ -120,7 +119,6 @@ export const update = validate(
         .min(3, 'User name must be at least 3 characters')
         .max(40, 'User name must be a maximum of 40 characters')
         .optional(),
-      imageURL: z.string().optional(),
     }),
     params: z.object({
       _id: objectIdSchema('User _id'),
@@ -146,7 +144,6 @@ export const updateByManagement = validate(
         .optional(),
       email: z.email('User email must be valid').optional(),
       emailVerified: z.boolean().optional(),
-      imageURL: z.string().optional(),
     }),
     params: z.object({
       _id: objectIdSchema('User _id'),
