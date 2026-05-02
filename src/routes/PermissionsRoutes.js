@@ -10,60 +10,30 @@ const router = express.Router();
 // ===================
 // PERMISSÕES (Admin Only)
 // ===================
-router.get(
-  '/permissions',
-  verifyJWT,
-  verifyPermissionAdmin,
-  PermissionController.get,
-);
-router.get(
-  '/permissions/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  PermissionController.getById,
-);
-router.post(
-  '/permissions',
-  verifyJWT,
-  verifyPermissionAdmin,
-  PermissionController.create,
-);
-router.patch(
-  '/permissions/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  PermissionController.update,
-);
-router.delete(
-  '/permissions/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  PermissionController.destroy,
-);
+router
+  .route('/')
+  .get(verifyJWT, verifyPermissionAdmin, PermissionController.get)
+  .post(verifyJWT, verifyPermissionAdmin, PermissionController.create);
+
+router
+  .route('/:_id')
+  .get(verifyJWT, verifyPermissionAdmin, PermissionController.getById)
+  .patch(verifyJWT, verifyPermissionAdmin, PermissionController.update)
+  .delete(verifyJWT, verifyPermissionAdmin, PermissionController.destroy);
 
 // ===================
 // PAPÉIS (Admin Only)
 // ===================
-router.get('/roles', verifyJWT, verifyPermissionAdmin, RoleController.get);
-router.get(
-  '/roles/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  RoleController.getById,
-);
-router.post('/roles', verifyJWT, verifyPermissionAdmin, RoleController.create);
-router.patch(
-  '/roles/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  RoleController.update,
-);
-router.delete(
-  '/roles/:_id',
-  verifyJWT,
-  verifyPermissionAdmin,
-  RoleController.destroy,
-);
+router
+  .route('/roles')
+  .get(verifyJWT, verifyPermissionAdmin, RoleController.get)
+  .post(verifyJWT, verifyPermissionAdmin, RoleController.create);
+
+router
+  .route('/roles/:_id')
+  .get(verifyJWT, verifyPermissionAdmin, RoleController.getById)
+  .patch(verifyJWT, verifyPermissionAdmin, RoleController.update)
+  .delete(verifyJWT, verifyPermissionAdmin, RoleController.destroy);
 
 // Gerenciar permissões dentro de um papel
 router.post(
@@ -82,23 +52,24 @@ router.delete(
 // ===================
 // PERMISSÕES DE USUÁRIO (Admin Only)
 // ===================
-router.get(
-  '/users/:userId/permissions',
-  verifyJWT,
-  verifyPermissionAdmin,
-  UserPermissionController.getUserPermissions,
-);
+router
+  .route('/users/:userId/permissions')
+  .get(
+    verifyJWT,
+    verifyPermissionAdmin,
+    UserPermissionController.getUserPermissions,
+  )
+  .patch(
+    verifyJWT,
+    verifyPermissionAdmin,
+    UserPermissionController.updateUserPermissions,
+  );
+
 router.get(
   '/users/:userId/permissions/details',
   verifyJWT,
   verifyPermissionAdmin,
   UserPermissionController.getUserPermissionDetails,
-);
-router.patch(
-  '/users/:userId/permissions',
-  verifyJWT,
-  verifyPermissionAdmin,
-  UserPermissionController.updateUserPermissions,
 );
 
 // Gerenciar papéis de um usuário
