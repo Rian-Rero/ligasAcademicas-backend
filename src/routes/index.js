@@ -9,6 +9,7 @@ import SquadRoutes from './SquadsRoutes.js';
 import UniversityRoutes from './UniversitiesRoutes.js';
 import UserRoutes from './UsersRoutes.js';
 import PermissionsRoutes from './PermissionsRoutes.js';
+import TaskRoutes from './TasksRoutes.js';
 
 const routes = Router();
 
@@ -21,6 +22,7 @@ routes
   .use('/league-memberships', LeagueMembershipRoutes)
   .use('/permissions', PermissionsRoutes)
   .use('/squads', SquadRoutes)
+  .use('/tasks', TaskRoutes)
   .use('/users', UserRoutes)
   .use('/universities', UniversityRoutes);
 

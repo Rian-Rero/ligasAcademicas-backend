@@ -45,6 +45,7 @@ export const COLLECTION_NAMES = {
   PERMISSION: 'permissions',
   ROLE: 'roles',
   USER_PERMISSION: 'userpermissions',
+  TASK: 'tasks',
 };
 
 export const MANAGER_ROLE_KEYWORDS = ['admin', 'manager'];

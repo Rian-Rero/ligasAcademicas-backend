@@ -320,3 +320,165 @@ export function managementPasswordResetEmail({ user, temporaryPassword }) {
 
   return sendEmail(mailOptions);
 }
+
+export function taskDelegated({ assignee, task }) {
+  const tasksLink = `${process.env.FRONTEND_URL}/tasks`;
+
+  const body = html`
+    <div
+      style="
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #0f172a;
+        line-height: 1.5;
+      "
+    >
+      <h1 style="margin: 0 0 14px 0; color: #0f172a;">
+        📋 Nova tarefa delegada
+      </h1>
+
+      <p>Olá, ${assignee.name}!</p>
+      <p>Você recebeu uma nova tarefa que precisa ser concluída.</p>
+
+      <div
+        style="
+          margin: 20px 0;
+          padding: 16px;
+          border: 2px solid #3b82f6;
+          border-radius: 8px;
+          background: #eff6ff;
+        "
+      >
+        <h2 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 18px;">
+          ${task.title}
+        </h2>
+        <p style="margin: 0 0 8px 0; color: #0f172a;">${task.description}</p>
+        <p style="margin: 8px 0; color: #475569;">
+          <strong>Prazo:</strong>
+          ${new Date(task.dueDate).toLocaleDateString('pt-BR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </p>
+        <p style="margin: 8px 0; color: #475569;">
+          <strong>Prioridade:</strong>
+          ${task.priority === 'HIGH'
+            ? '🔴 Alta'
+            : task.priority === 'MEDIUM'
+              ? '🟡 Média'
+              : '🟢 Baixa'}
+        </p>
+      </div>
+
+      <div style="margin: 20px 0; text-align: center;">
+        <a
+          href="${tasksLink}"
+          style="
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 16px;
+          "
+        >
+          Ver tarefa
+        </a>
+      </div>
+
+      <p style="margin-top: 20px; color: #64748b; font-size: 14px;">
+        Você também receberá um lembrete no seu Google Calendar no dia da
+        entrega.
+      </p>
+    </div>
+  `;
+
+  const textBodyLines = [
+    `Olá, ${assignee.name}!`,
+    'Você recebeu uma nova tarefa.',
+    `Título: ${task.title}`,
+    `Descrição: ${task.description}`,
+    `Prazo: ${new Date(task.dueDate).toLocaleDateString('pt-BR')}`,
+    `Prioridade: ${task.priority}`,
+    `Acesse suas tarefas em: ${tasksLink}`,
+  ];
+
+  const mailOptions = {
+    to: assignee.email,
+    subject: `[SGLA] - Nova tarefa delegada: ${task.title}`,
+    text: textBodyLines.join('\n'),
+    html: template(body),
+  };
+
+  return sendEmail(mailOptions);
+}
+
+export function taskCompleted({ assigner, assignee, task }) {
+  const body = html`
+    <div
+      style="
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #0f172a;
+        line-height: 1.5;
+      "
+    >
+      <h1 style="margin: 0 0 14px 0; color: #0f172a;">✅ Tarefa concluída</h1>
+
+      <p>Olá, ${assigner.name}!</p>
+      <p>
+        A tarefa que você delegou para ${assignee.name} foi concluída com
+        sucesso.
+      </p>
+
+      <div
+        style="
+          margin: 20px 0;
+          padding: 16px;
+          border: 2px solid #10b981;
+          border-radius: 8px;
+          background: #f0fdf4;
+        "
+      >
+        <h2 style="margin: 0 0 12px 0; color: #065f46; font-size: 18px;">
+          ${task.title}
+        </h2>
+        <p style="margin: 0 0 8px 0; color: #0f172a;">${task.description}</p>
+        <p style="margin: 8px 0; color: #475569;">
+          <strong>Concluída em:</strong>
+          ${new Date(task.completedAt).toLocaleDateString('pt-BR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <p style="margin: 8px 0; color: #475569;">
+          <strong>Responsável:</strong> ${assignee.name}
+        </p>
+      </div>
+    </div>
+  `;
+
+  const textBodyLines = [
+    `Olá, ${assigner.name}!`,
+    `A tarefa "${task.title}" foi concluída.`,
+    `Responsável: ${assignee.name}`,
+    `Concluída em: ${new Date(task.completedAt).toLocaleDateString('pt-BR')}`,
+  ];
+
+  const mailOptions = {
+    to: assigner.email,
+    subject: `[SGLA] - Tarefa concluída: ${task.title} ✅`,
+    text: textBodyLines.join('\n'),
+    html: template(body),
+  };
+
+  return sendEmail(mailOptions);
+}
