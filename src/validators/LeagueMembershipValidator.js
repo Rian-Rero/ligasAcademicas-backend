@@ -97,3 +97,15 @@ export const destroy = validate(
     }),
   }),
 );
+
+export const getInactiveByLeague = validate(
+  z.object({
+    query: z.object({
+      academicLeague: objectIdSchema(
+        'League membership academic league',
+      ).optional(),
+      university: objectIdSchema('League membership university').optional(),
+      user: objectIdSchema('League membership user').optional(),
+    }),
+  }),
+);

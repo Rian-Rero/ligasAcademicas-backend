@@ -236,3 +236,13 @@ export async function end(_id) {
   foundLeagueMembership.isActive = false;
   return foundLeagueMembership.save();
 }
+
+export async function getInactive(inputFilters) {
+  return LeagueMembershipModel.find({ ...inputFilters, isActive: false })
+    .populate('user', 'name email image')
+    .populate('academicLeague', 'name')
+    .populate('squad', 'name')
+    .populate('university', 'name')
+    .lean()
+    .exec();
+}

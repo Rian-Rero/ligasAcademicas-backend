@@ -74,10 +74,11 @@ export const create = validate(
         .transform((value) => Number(value.toFixed(2))),
       issueDate: dateSchema('Certificate issueDate'),
       pdfUrl: z
-        .string({ required_error: 'Certificate pdfUrl is required' })
+        .string()
         .trim()
         .min(3, 'Certificate pdfUrl must be at least 3 characters')
-        .max(1200, 'Certificate pdfUrl must be a maximum of 1200 characters'),
+        .max(1200, 'Certificate pdfUrl must be a maximum of 1200 characters')
+        .optional(),
     }),
   }),
 );

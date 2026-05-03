@@ -47,3 +47,11 @@ export const end = asyncHandler(async (req, res) => {
 
   res.status(SUCCESS_CODES.OK).json(updatedLeagueMembership);
 });
+
+export const getInactive = asyncHandler(async (req, res) => {
+  const inputFilters = LeagueMembershipValidator.getInactiveByLeague(req);
+  const leagueMemberships =
+    await LeagueMembershipService.getInactive(inputFilters);
+
+  res.status(SUCCESS_CODES.OK).json(leagueMemberships);
+});

@@ -2,6 +2,8 @@ import * as UniversityService from '../services/UniversityService.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
 import { SUCCESS_CODES } from '../utils/general/constants.js';
 import * as UniversityValidator from '../validators/UniversityValidator.js';
+import uploadUniversityLogo from '../middleware/uploadUniversityLogo.js';
+import { BadRequest } from '../errors/baseErrors.js';
 
 export const get = asyncHandler(async (req, res) => {
   const inputFilters = UniversityValidator.get(req);
@@ -33,6 +35,23 @@ export const update = asyncHandler(async (req, res) => {
 
   res.status(SUCCESS_CODES.OK).json(updatedUniversity);
 });
+
+export const uploadLogo = [
+  uploadUniversityLogo,
+  asyncHandler(async (req, res) => {
+    const { _id } = UniversityValidator.getById(req);
+
+    if (!req.file)
+      throw new BadRequest('Logo image file is required in field "logo"');
+
+    const updatedUniversity = await UniversityService.uploadLogo({
+      _id,
+      file: req.file,
+    });
+
+    res.status(SUCCESS_CODES.OK).json(updatedUniversity);
+  }),
+];
 
 export const destroy = asyncHandler(async (req, res) => {
   const { _id } = UniversityValidator.destroy(req);

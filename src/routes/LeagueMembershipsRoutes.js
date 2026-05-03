@@ -19,6 +19,13 @@ LeagueMembershipRoutes.route('/')
     LeagueMembershipController.create,
   );
 
+LeagueMembershipRoutes.get(
+  '/inactive',
+  verifyJWT,
+  verifyPermission(permissions.leagueMembership.view),
+  LeagueMembershipController.getInactive,
+);
+
 LeagueMembershipRoutes.route('/:_id')
   .get(
     verifyJWT,

@@ -30,6 +30,20 @@ UniversityRoutes.route('/:_id')
     verifyPermission(permissions.university.edit),
     UniversityController.update,
   )
+  .post(
+    verifyJWT,
+    verifyPermission(permissions.university.edit),
+    // endpoint for uploading university logo
+    async (req, res, next) => {
+      // delegate to controller to keep routes slim
+      try {
+        // multer middleware will populate req.file
+        return await UniversityController.uploadLogo(req, res, next);
+      } catch (err) {
+        next(err);
+      }
+    },
+  )
   .delete(
     verifyJWT,
     verifyPermission(permissions.university.delete),

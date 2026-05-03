@@ -1,6 +1,8 @@
 import { ConflictError, NotFoundError } from '../errors/baseErrors.js';
 import AcademicLeagueModel from '../models/AcademicLeagueModel.js';
 import UniversityModel from '../models/UniversityModel.js';
+import cloudinary from '../utils/libs/cloudinary/index.js';
+import { cloudinaryFileSchema } from '../utils/libs/zod/cloudinaryFileSchemas.js';
 
 export async function get(inputFilters) {
   return UniversityModel.find(inputFilters).lean().exec();
@@ -35,4 +37,36 @@ export async function destroy(_id) {
     throw new ConflictError('Cannot delete university with linked leagues');
 
   await foundUniversity.deleteOne();
+}
+
+export async function uploadLogo({ _id, file }) {
+  const foundUniversity = await UniversityModel.findById(_id).exec();
+  if (!foundUniversity) throw new NotFoundError('University not found');
+
+  const previousLogoKey = foundUniversity.logo?.key;
+  const extension = file.mimetype?.split('/')[1] || 'jpg';
+  const publicId = `universities/logo/${_id}`;
+
+  const { key, url } = await cloudinary.uploadFile({
+    fileBuffer: file.buffer,
+    fileName: `${_id}.${extension}`,
+    publicId,
+    resourceType: 'image',
+  });
+  const uploadedLogo = cloudinaryFileSchema.parse({ key, url });
+
+  try {
+    const updatedUniversity = await foundUniversity
+      .set({ logo: uploadedLogo })
+      .save();
+
+    if (previousLogoKey && previousLogoKey !== uploadedLogo.key) {
+      await cloudinary.deleteFile(previousLogoKey);
+    }
+
+    return updatedUniversity;
+  } catch (error) {
+    await cloudinary.deleteFile(key);
+    throw error;
+  }
 }
