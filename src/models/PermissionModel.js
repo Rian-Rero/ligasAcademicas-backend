@@ -38,6 +38,7 @@ const PermissionSchema = new mongoose.Schema(
         'academicLeague',
         'leagueMembership',
         'university',
+        'task',
         'session',
         'system',
       ],
