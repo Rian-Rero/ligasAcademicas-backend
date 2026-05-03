@@ -15,12 +15,6 @@ router
   .get(verifyJWT, verifyPermissionAdmin, PermissionController.get)
   .post(verifyJWT, verifyPermissionAdmin, PermissionController.create);
 
-router
-  .route('/:_id')
-  .get(verifyJWT, verifyPermissionAdmin, PermissionController.getById)
-  .patch(verifyJWT, verifyPermissionAdmin, PermissionController.update)
-  .delete(verifyJWT, verifyPermissionAdmin, PermissionController.destroy);
-
 // ===================
 // PAPÉIS (Admin Only)
 // ===================
@@ -99,5 +93,11 @@ router.delete(
   verifyPermissionAdmin,
   UserPermissionController.removePermissionFromUser,
 );
+
+router
+  .route('/:_id')
+  .get(verifyJWT, verifyPermissionAdmin, PermissionController.getById)
+  .patch(verifyJWT, verifyPermissionAdmin, PermissionController.update)
+  .delete(verifyJWT, verifyPermissionAdmin, PermissionController.destroy);
 
 export default router;
