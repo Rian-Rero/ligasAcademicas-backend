@@ -193,6 +193,30 @@ export const seedSystemRoles = async () => {
       priority: 90,
       color: '#3B82F6',
     },
+    {
+      name: 'Membro',
+      key: 'member',
+      description:
+        'Papel padrão para novos usuários. Permite visualizar eventos, certificados, tarefas e informações da liga.',
+      isSystem: true,
+      isGlobal: true,
+      permissions: adminPermissions
+        .filter((p) =>
+          [
+            permissions.event.view,
+            permissions.certificate.view,
+            permissions.task.view,
+            permissions.squad.view,
+            permissions.attendance.view,
+            permissions.academicLeague.view,
+            permissions.university.view,
+            permissions.leagueMembership.view,
+          ].includes(p.key),
+        )
+        .map((p) => p._id),
+      priority: 50,
+      color: '#10B981',
+    },
   ];
 
   for (const role of systemRoles) {

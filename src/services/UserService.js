@@ -4,6 +4,7 @@ import {
   BadRequest,
 } from '../errors/baseErrors.js';
 import UserModel from '../models/UserModel.js';
+import RoleModel from '../models/RoleModel.js';
 import UserPwdTokenModel from '../models/UserPwdTokenModel.js';
 import * as UserPermissionService from './UserPermissionService.js';
 import {
@@ -67,9 +68,14 @@ export async function getByIdWithGoogleTokens(_id) {
 }
 
 export async function create(inputData) {
-  const newUser = (await UserModel.create(inputData)).toObject();
+  const created = await UserModel.create(inputData);
+  const newUser = created.toObject();
   delete newUser.password;
 
+  const memberRole = await RoleModel.findOne({ key: 'member' }).lean().exec();
+  if (memberRole) {
+    await UserPermissionService.addRoleToUser(newUser._id, memberRole._id);
+  }
   return newUser;
 }
 
