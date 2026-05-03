@@ -61,3 +61,76 @@ export const PICTURES_CONFIG = {
   ],
   sizeLimitInMB: 5,
 };
+
+// Sistema de Permissões por Módulo
+export const permissions = {
+  user: {
+    create: 'user.create',
+    view: 'user.view',
+    edit: 'user.edit',
+    delete: 'user.delete',
+  },
+  role: {
+    create: 'role.create',
+    view: 'role.view',
+    edit: 'role.edit',
+    delete: 'role.delete',
+  },
+  permission: {
+    create: 'permission.create',
+    view: 'permission.view',
+    edit: 'permission.edit',
+    delete: 'permission.delete',
+  },
+  event: {
+    create: 'event.create',
+    view: 'event.view',
+    edit: 'event.edit',
+    delete: 'event.delete',
+  },
+  attendance: {
+    create: 'attendance.create',
+    view: 'attendance.view',
+    edit: 'attendance.edit',
+    delete: 'attendance.delete',
+  },
+  certificate: {
+    create: 'certificate.create',
+    view: 'certificate.view',
+    edit: 'certificate.edit',
+    delete: 'certificate.delete',
+  },
+  squad: {
+    create: 'squad.create',
+    view: 'squad.view',
+    edit: 'squad.edit',
+    delete: 'squad.delete',
+  },
+  academicLeague: {
+    create: 'academicLeague.create',
+    view: 'academicLeague.view',
+    edit: 'academicLeague.edit',
+    delete: 'academicLeague.delete',
+  },
+  leagueMembership: {
+    create: 'leagueMembership.create',
+    view: 'leagueMembership.view',
+    edit: 'leagueMembership.edit',
+    delete: 'leagueMembership.delete',
+  },
+  university: {
+    create: 'university.create',
+    view: 'university.view',
+    edit: 'university.edit',
+    delete: 'university.delete',
+  },
+  task: {
+    create: 'task.create',
+    view: 'task.view',
+    edit: 'task.edit',
+    delete: 'task.delete',
+  },
+  system: {
+    admin: 'system.admin',
+  },
+};

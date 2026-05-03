@@ -3,41 +3,42 @@ import { Router } from 'express';
 import * as LeagueMembershipController from '../controllers/LeagueMembershipController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import { verifyPermission } from '../middleware/verifyPermission.js';
+import { permissions } from '../utils/general/constants.js';
 
 const LeagueMembershipRoutes = Router();
 
 LeagueMembershipRoutes.route('/')
   .get(
     verifyJWT,
-    verifyPermission('leagueMembership.view'),
+    verifyPermission(permissions.leagueMembership.view),
     LeagueMembershipController.get,
   )
   .post(
     verifyJWT,
-    verifyPermission('leagueMembership.create'),
+    verifyPermission(permissions.leagueMembership.create),
     LeagueMembershipController.create,
   );
 
 LeagueMembershipRoutes.route('/:_id')
   .get(
     verifyJWT,
-    verifyPermission('leagueMembership.view'),
+    verifyPermission(permissions.leagueMembership.view),
     LeagueMembershipController.getById,
   )
   .patch(
     verifyJWT,
-    verifyPermission('leagueMembership.edit'),
+    verifyPermission(permissions.leagueMembership.edit),
     LeagueMembershipController.update,
   )
   .delete(
     verifyJWT,
-    verifyPermission('leagueMembership.delete'),
+    verifyPermission(permissions.leagueMembership.delete),
     LeagueMembershipController.destroy,
   );
 
 LeagueMembershipRoutes.route('/:_id/end').patch(
   verifyJWT,
-  verifyPermission('leagueMembership.edit'),
+  verifyPermission(permissions.leagueMembership.edit),
   LeagueMembershipController.end,
 );
 

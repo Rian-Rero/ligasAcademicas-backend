@@ -3,35 +3,36 @@ import { Router } from 'express';
 import * as AcademicLeagueController from '../controllers/AcademicLeagueController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import { verifyPermission } from '../middleware/verifyPermission.js';
+import { permissions } from '../utils/general/constants.js';
 
 const AcademicLeagueRoutes = Router();
 
 AcademicLeagueRoutes.route('/')
   .get(
     verifyJWT,
-    verifyPermission('academicLeague.view'),
+    verifyPermission(permissions.academicLeague.view),
     AcademicLeagueController.get,
   )
   .post(
     verifyJWT,
-    verifyPermission('academicLeague.create'),
+    verifyPermission(permissions.academicLeague.create),
     AcademicLeagueController.create,
   );
 
 AcademicLeagueRoutes.route('/:_id')
   .get(
     verifyJWT,
-    verifyPermission('academicLeague.view'),
+    verifyPermission(permissions.academicLeague.view),
     AcademicLeagueController.getById,
   )
   .patch(
     verifyJWT,
-    verifyPermission('academicLeague.edit'),
+    verifyPermission(permissions.academicLeague.edit),
     AcademicLeagueController.update,
   )
   .delete(
     verifyJWT,
-    verifyPermission('academicLeague.delete'),
+    verifyPermission(permissions.academicLeague.delete),
     AcademicLeagueController.destroy,
   );
 

@@ -3,31 +3,36 @@ import { Router } from 'express';
 import * as UniversityController from '../controllers/UniversityController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import { verifyPermission } from '../middleware/verifyPermission.js';
+import { permissions } from '../utils/general/constants.js';
 
 const UniversityRoutes = Router();
 
 UniversityRoutes.route('/')
-  .get(verifyJWT, verifyPermission('university.view'), UniversityController.get)
+  .get(
+    verifyJWT,
+    verifyPermission(permissions.university.view),
+    UniversityController.get,
+  )
   .post(
     verifyJWT,
-    verifyPermission('university.create'),
+    verifyPermission(permissions.university.create),
     UniversityController.create,
   );
 
 UniversityRoutes.route('/:_id')
   .get(
     verifyJWT,
-    verifyPermission('university.view'),
+    verifyPermission(permissions.university.view),
     UniversityController.getById,
   )
   .patch(
     verifyJWT,
-    verifyPermission('university.edit'),
+    verifyPermission(permissions.university.edit),
     UniversityController.update,
   )
   .delete(
     verifyJWT,
-    verifyPermission('university.delete'),
+    verifyPermission(permissions.university.delete),
     UniversityController.destroy,
   );
 
