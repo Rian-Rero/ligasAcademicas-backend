@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import UserPermissionModel from '../models/UserPermissionModel.js';
 import UserModel from '../models/UserModel.js';
 import RoleModel from '../models/RoleModel.js';
@@ -128,7 +129,7 @@ export const getUserPermissions = async (userId, academicLeague = null) => {
   }
 
   const permissionIds = Array.from(allPermissions).map(
-    (id) => new (require('mongoose').Types.ObjectId)(id),
+    (id) => new mongoose.Types.ObjectId(id),
   );
 
   return PermissionModel.find({ _id: { $in: permissionIds } })

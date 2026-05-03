@@ -2,6 +2,7 @@ import RoleModel from '../models/RoleModel.js';
 import PermissionModel from '../models/PermissionModel.js';
 import UserPermissionModel from '../models/UserPermissionModel.js';
 import { NotFoundError, ConflictError } from '../errors/baseErrors.js';
+import { permissions } from '../utils/general/constants.js';
 
 export const get = async (filters) => {
   return RoleModel.find(filters)
@@ -134,6 +135,39 @@ export const seedSystemRoles = async () => {
     .lean()
     .exec();
 
+  const managerPermissionKeys = [
+    // Eventos
+    permissions.event.create,
+    permissions.event.view,
+    permissions.event.edit,
+    permissions.event.delete,
+    // Presenças
+    permissions.attendance.create,
+    permissions.attendance.view,
+    permissions.attendance.edit,
+    // Certificados
+    permissions.certificate.create,
+    permissions.certificate.view,
+    permissions.certificate.edit,
+    // Subequipes
+    permissions.squad.create,
+    permissions.squad.view,
+    permissions.squad.edit,
+    permissions.squad.delete,
+    // Membros de liga
+    permissions.leagueMembership.create,
+    permissions.leagueMembership.view,
+    permissions.leagueMembership.edit,
+    // Contexto institucional usado nas telas de gestão
+    permissions.academicLeague.view,
+    permissions.university.view,
+    // Tarefas
+    permissions.task.create,
+    permissions.task.view,
+    permissions.task.edit,
+    permissions.task.delete,
+  ];
+
   const systemRoles = [
     {
       name: 'Administrador',
@@ -149,21 +183,12 @@ export const seedSystemRoles = async () => {
     {
       name: 'Gerenciador',
       key: 'manager',
-      description: 'Pode gerenciar eventos, presença e membros da liga.',
+      description:
+        'Pode gerenciar operações da liga: eventos, membros, subequipes, tarefas e certificados.',
       isSystem: true,
       isGlobal: true,
       permissions: adminPermissions
-        .filter((p) =>
-          [
-            'event.create',
-            'event.view',
-            'event.edit',
-            'event.delete',
-            'attendance.manage',
-            'certificate.create',
-            'squad.manage',
-          ].includes(p.key),
-        )
+        .filter((p) => managerPermissionKeys.includes(p.key))
         .map((p) => p._id),
       priority: 90,
       color: '#3B82F6',
@@ -175,6 +200,19 @@ export const seedSystemRoles = async () => {
 
     if (!exists) {
       await RoleModel.create(role);
+      continue;
+    }
+
+    // Sincroniza papéis de sistema já existentes (especialmente manager/admin)
+    if (exists.isSystem) {
+      await RoleModel.findByIdAndUpdate(exists._id, {
+        name: role.name,
+        description: role.description,
+        isGlobal: role.isGlobal,
+        permissions: role.permissions,
+        priority: role.priority,
+        color: role.color,
+      }).exec();
     }
   }
 };

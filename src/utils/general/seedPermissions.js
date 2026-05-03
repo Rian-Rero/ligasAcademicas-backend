@@ -15,20 +15,19 @@ export const seedSystemPermissionsAndRoles = async () => {
       .lean()
       .exec();
 
-    if (existingSystemPermission) {
-      logger.info('System permissions already seeded, skipping...');
-      return;
+    logger.info('Starting seed/sync of system permissions and roles...');
+
+    if (!existingSystemPermission) {
+      // Seed permissões apenas na primeira inicialização
+      await PermissionService.seedSystemPermissions();
+      logger.info('✅ System permissions seeded successfully');
+    } else {
+      logger.info('System permissions already seeded, skipping permissions');
     }
 
-    logger.info('Starting seed of system permissions and roles...');
-
-    // Seed permissões
-    await PermissionService.seedSystemPermissions();
-    logger.info('✅ System permissions seeded successfully');
-
-    // Seed papéis
+    // Sempre sincroniza papéis de sistema (admin/manager)
     await RoleService.seedSystemRoles();
-    logger.info('✅ System roles seeded successfully');
+    logger.info('✅ System roles synced successfully');
 
     logger.info('✅ System permissions and roles seeded completely');
   } catch (error) {
