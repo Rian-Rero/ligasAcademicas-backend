@@ -34,30 +34,34 @@ export async function create(inputData) {
   if (!foundUser) throw new NotFoundError('User not found');
 
   if (membershipType === 'league') {
-    if (!inputData.academicLeague || !inputData.squad) {
-      throw new ConflictError(
-        'League memberships require academicLeague and squad',
-      );
+    if (!inputData.academicLeague) {
+      throw new ConflictError('League memberships require academicLeague');
     }
 
-    const [foundAcademicLeague, foundSquad] = await Promise.all([
-      AcademicLeagueModel.findById(inputData.academicLeague)
-        .select({ university: 1 })
-        .lean()
-        .exec(),
-      SquadModel.findById(inputData.squad)
-        .select({ academicLeague: 1 })
-        .lean()
-        .exec(),
-    ]);
+    const foundAcademicLeague = await AcademicLeagueModel.findById(
+      inputData.academicLeague,
+    )
+      .select({ university: 1 })
+      .lean()
+      .exec();
 
     if (!foundAcademicLeague)
       throw new NotFoundError('Academic league not found');
-    if (!foundSquad) throw new NotFoundError('Squad not found');
-    if (!isSameObjectId(foundSquad.academicLeague, inputData.academicLeague)) {
-      throw new ConflictError(
-        'Squad does not belong to informed academic league',
-      );
+
+    if (inputData.squad) {
+      let foundSquad = await SquadModel.findById(inputData.squad)
+        .select({ academicLeague: 1 })
+        .lean()
+        .exec();
+
+      if (!foundSquad) throw new NotFoundError('Squad not found');
+      if (
+        !isSameObjectId(foundSquad.academicLeague, inputData.academicLeague)
+      ) {
+        throw new ConflictError(
+          'Squad does not belong to informed academic league',
+        );
+      }
     }
 
     if (
@@ -71,10 +75,12 @@ export async function create(inputData) {
 
     inputData.university = foundAcademicLeague.university;
     inputData.membershipType = 'league';
+
     return (
       await LeagueMembershipModel.create({
         ...inputData,
         university: foundAcademicLeague.university,
+        squad: inputData.squad || null,
       })
     ).toObject();
   }
@@ -126,30 +132,34 @@ export async function update({ _id, inputData }) {
   if (!foundUser) throw new NotFoundError('User not found');
 
   if (nextState.membershipType === 'league') {
-    if (!nextState.academicLeague || !nextState.squad) {
-      throw new ConflictError(
-        'League memberships require academicLeague and squad',
-      );
+    if (!nextState.academicLeague) {
+      throw new ConflictError('League memberships require academicLeague');
     }
 
-    const [foundAcademicLeague, foundSquad] = await Promise.all([
-      AcademicLeagueModel.findById(nextState.academicLeague)
-        .select({ university: 1 })
-        .lean()
-        .exec(),
-      SquadModel.findById(nextState.squad)
-        .select({ academicLeague: 1 })
-        .lean()
-        .exec(),
-    ]);
+    const foundAcademicLeague = await AcademicLeagueModel.findById(
+      nextState.academicLeague,
+    )
+      .select({ university: 1 })
+      .lean()
+      .exec();
 
     if (!foundAcademicLeague)
       throw new NotFoundError('Academic league not found');
-    if (!foundSquad) throw new NotFoundError('Squad not found');
-    if (!isSameObjectId(foundSquad.academicLeague, nextState.academicLeague)) {
-      throw new ConflictError(
-        'Squad does not belong to informed academic league',
-      );
+
+    if (nextState.squad) {
+      const foundSquad = await SquadModel.findById(nextState.squad)
+        .select({ academicLeague: 1 })
+        .lean()
+        .exec();
+
+      if (!foundSquad) throw new NotFoundError('Squad not found');
+      if (
+        !isSameObjectId(foundSquad.academicLeague, nextState.academicLeague)
+      ) {
+        throw new ConflictError(
+          'Squad does not belong to informed academic league',
+        );
+      }
     }
 
     if (
@@ -162,6 +172,7 @@ export async function update({ _id, inputData }) {
     }
 
     foundLeagueMembership.university = foundAcademicLeague.university;
+    if (!nextState.squad) foundLeagueMembership.squad = null;
 
     return foundLeagueMembership.set(inputData).save();
   }
