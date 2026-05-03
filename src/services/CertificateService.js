@@ -39,6 +39,11 @@ export async function get(inputFilters) {
     };
   }
 
+  // Support querying by multiple leagueMembership ids passed as an array
+  if (Array.isArray(dbFilters.leagueMembership)) {
+    dbFilters.leagueMembership = { $in: dbFilters.leagueMembership };
+  }
+
   return CertificateModel.find(dbFilters).sort({ issueDate: -1 }).lean().exec();
 }
 

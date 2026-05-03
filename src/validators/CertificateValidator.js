@@ -42,9 +42,12 @@ export const get = validate(
   z.object({
     query: z.object({
       _id: objectIdSchema('Certificate _id').optional(),
-      leagueMembership: objectIdSchema(
-        'Certificate league membership',
-      ).optional(),
+      leagueMembership: z
+        .union([
+          objectIdSchema('Certificate league membership'),
+          z.array(objectIdSchema('Certificate league membership')),
+        ])
+        .optional(),
       pdfUrl: z.string().trim().optional(),
       issueDateFrom: dateSchema('Certificate issueDateFrom').optional(),
       issueDateTo: dateSchema('Certificate issueDateTo').optional(),
