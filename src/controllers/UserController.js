@@ -4,6 +4,7 @@ import * as GoogleCalendarService from '../services/GoogleCalendarService.js';
 import LeagueMembershipModel from '../models/LeagueMembershipModel.js';
 import * as UserPermissionService from '../services/UserPermissionService.js';
 import * as UserService from '../services/UserService.js';
+import * as LeagueMembershipService from '../services/LeagueMembershipService.js';
 import asyncHandler from '../utils/general/asyncHandler.js';
 import { SUCCESS_CODES } from '../utils/general/constants.js';
 import {
@@ -65,6 +66,41 @@ export const create = asyncHandler(async (req, res) => {
     password: temporaryPassword,
     mustChangePassword: true,
   });
+
+  try {
+    const authUserId = req.user?._id;
+    const isAdmin = await UserPermissionService.userHasRole(
+      authUserId,
+      'admin',
+    );
+
+    if (!isAdmin) {
+      // Try to find an active management membership for the requester
+      const managerMembership = await LeagueMembershipModel.findOne({
+        user: authUserId,
+        isActive: true,
+      })
+        .select({ academicLeague: 1, university: 1, role: 1 })
+        .lean()
+        .exec();
+
+      if (managerMembership?.academicLeague) {
+        // create a league membership for the newly created user mirroring manager's league
+        await LeagueMembershipService.create({
+          user: newUser._id,
+          membershipType: 'league',
+          academicLeague: managerMembership.academicLeague,
+          university: managerMembership.university,
+          role: 'membro',
+          isActive: true,
+        });
+      }
+    }
+  } catch (err) {
+    // If creating the mirrored membership fails, remove the created user and rethrow
+    await UserService.destroy(newUser._id);
+    throw err;
+  }
 
   const token = signConfirmEmailJwt(newUser._id);
   try {
