@@ -74,7 +74,11 @@ export async function create(inputData) {
   let pdfUrl = inputData.pdfUrl;
   if (!pdfUrl) {
     // generate pdf buffer
-    const doc = new PDFDocument({ size: 'A4', margin: 48 });
+    const doc = new PDFDocument({
+      size: 'A4',
+      layout: 'landscape',
+      margin: 42,
+    });
     const chunks = [];
     doc.on('data', (chunk) => chunks.push(chunk));
 
@@ -82,6 +86,41 @@ export async function create(inputData) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
     });
+
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const margin = 42;
+    const accent = '#8C6B2F';
+    const dark = '#2F2418';
+    const soft = '#F7F2E8';
+
+    doc.save();
+    doc.rect(0, 0, pageWidth, pageHeight).fill(soft);
+    doc.restore();
+
+    doc.save();
+    doc.lineWidth(1.2).strokeColor(accent);
+    doc
+      .rect(margin, margin, pageWidth - margin * 2, pageHeight - margin * 2)
+      .stroke();
+    doc.lineWidth(0.5).strokeColor('#D8C7A5');
+    doc
+      .rect(
+        margin + 8,
+        margin + 8,
+        pageWidth - (margin + 8) * 2,
+        pageHeight - (margin + 8) * 2,
+      )
+      .stroke();
+    doc.restore();
+
+    doc.save();
+    doc
+      .fillColor(accent)
+      .opacity(0.16)
+      .ellipse(pageWidth / 2, pageHeight / 2, 170, 110)
+      .fill();
+    doc.restore();
 
     // header: university logo
     if (membership.university?.logo?.url) {
@@ -91,44 +130,137 @@ export async function create(inputData) {
           timeout: 5000,
         });
         const imgBuf = Buffer.from(res.data);
-        doc.image(imgBuf, 48, 48, { width: 100, height: 100 });
+        doc.image(imgBuf, pageWidth / 2 - 34, margin + 4, { fit: [68, 68] });
       } catch {
         // ignore image errors
       }
     }
 
-    doc.fontSize(18).text('Certificado de Participação', { align: 'center' });
-    doc.moveDown();
-
-    doc.fontSize(14).text(`Emitido para: ${membership.user?.name || '---'}`, {
-      align: 'left',
+    const titleY = membership.university?.logo?.url ? margin + 92 : margin + 34;
+    doc.fillColor(dark).font('Times-Bold').fontSize(28);
+    doc.text('Certificado de Participação', 0, titleY, {
+      align: 'center',
+      width: pageWidth,
     });
-    doc.moveDown(0.5);
 
-    const roleLine = `Função: ${membership.role || '---'}`;
-    const squadLine = membership.squad
-      ? ` | Equipe: ${membership.squad.name || membership.squad}`
-      : '';
-    const leagueLine = membership.academicLeague
-      ? `Liga: ${membership.academicLeague.name || membership.academicLeague}`
-      : '';
+    const titleLineY = titleY + 36;
+    doc.save();
+    doc.lineWidth(1).strokeColor(accent);
+    doc
+      .moveTo(pageWidth * 0.22, titleLineY)
+      .lineTo(pageWidth * 0.78, titleLineY)
+      .stroke();
+    doc.restore();
 
-    doc.fontSize(12).text(`${roleLine}${squadLine}`);
-    if (leagueLine) doc.text(leagueLine);
+    doc.fillColor(dark).font('Times-Italic').fontSize(15);
+    doc.text('Certificamos que', 0, titleLineY + 18, {
+      align: 'center',
+      width: pageWidth,
+    });
 
-    doc.moveDown();
-    doc.fontSize(12).text(`Horas: ${inputData.workLoadHours} horas`);
+    const certificateName = membership.user?.name || '---';
+    doc.fillColor(dark).font('Times-Bold').fontSize(30);
+    doc.text(certificateName, 0, titleLineY + 44, {
+      align: 'center',
+      width: pageWidth,
+    });
+
+    const nameBlockHeight = doc.heightOfString(certificateName, {
+      width: pageWidth,
+      align: 'center',
+    });
+    const nameLineY = titleLineY + 44 + nameBlockHeight + 8;
+    doc.save();
+    doc.lineWidth(0.9).strokeColor(accent);
+    doc
+      .moveTo(pageWidth * 0.18, nameLineY)
+      .lineTo(pageWidth * 0.82, nameLineY)
+      .stroke();
+    doc.restore();
+
+    doc.fillColor(dark).font('Times-Roman').fontSize(14);
     doc.text(
-      `Data de emissão: ${new Date(inputData.issueDate).toLocaleDateString('pt-BR')}`,
+      `recebeu este certificado por sua participação na ${membership.academicLeague?.name || membership.university?.name || 'instituição'}.`,
+      pageWidth * 0.16,
+      nameLineY + 18,
+      {
+        align: 'center',
+        width: pageWidth * 0.68,
+      },
     );
 
-    doc.moveDown(1.5);
-    const paragraph = `Este documento certifica que ${membership.user?.name || '---'} cumpriu as atividades vinculadas à sua participação na ${membership.academicLeague?.name || membership.university?.name || 'instituição'}, totalizando ${inputData.workLoadHours} horas.`;
-    doc.fontSize(11).text(paragraph, { align: 'justify' });
+    const infoY = pageHeight - 128;
+    const columnWidth = 166;
+    const gap = 18;
+    const totalWidth = columnWidth * 3 + gap * 2;
+    const startX = (pageWidth - totalWidth) / 2;
 
-    doc.moveDown(2);
-    doc.text('______________________________', { align: 'right' });
-    doc.text('Assinatura', { align: 'right' });
+    const infoCards = [
+      {
+        label: 'Função',
+        value: membership.role || '---',
+      },
+      {
+        label: 'Equipe',
+        value: membership.squad?.name || '---',
+      },
+      {
+        label: 'Horas',
+        value: `${inputData.workLoadHours} horas`,
+      },
+    ];
+
+    infoCards.forEach((card, index) => {
+      const x = startX + index * (columnWidth + gap);
+      doc.save();
+      doc
+        .roundedRect(x, infoY, columnWidth, 54, 8)
+        .fillAndStroke('#FFFDF8', '#D8C7A5');
+      doc.restore();
+      doc
+        .fillColor(accent)
+        .font('Times-Bold')
+        .fontSize(10)
+        .text(card.label.toUpperCase(), x, infoY + 10, {
+          align: 'center',
+          width: columnWidth,
+        });
+      doc
+        .fillColor(dark)
+        .font('Times-Bold')
+        .fontSize(14)
+        .text(card.value, x, infoY + 25, {
+          align: 'center',
+          width: columnWidth,
+        });
+    });
+
+    const issueDate = new Date(inputData.issueDate).toLocaleDateString('pt-BR');
+    doc
+      .fillColor(dark)
+      .font('Times-Italic')
+      .fontSize(12)
+      .text(`Data de emissão: ${issueDate}`, margin + 18, pageHeight - 66, {
+        align: 'left',
+        width: 230,
+      });
+
+    const signatureX = pageWidth - margin - 250;
+    doc.save();
+    doc.lineWidth(0.8).strokeColor(accent);
+    doc
+      .moveTo(signatureX, pageHeight - 78)
+      .lineTo(signatureX + 200, pageHeight - 78)
+      .stroke();
+    doc.restore();
+    doc
+      .fillColor(dark)
+      .font('Times-Roman')
+      .fontSize(12)
+      .text('Assinatura', signatureX, pageHeight - 66, {
+        align: 'center',
+        width: 200,
+      });
 
     doc.end();
 
