@@ -18,7 +18,7 @@ A plataforma automatiza processos burocráticos, permitindo o controle eficiente
 | Nome                              | Papel / Responsabilidade |
 | :-------------------------------- | :----------------------- |
 | **Rian Rero Lopes Jericó Vieira** | Desenvolvedor Fullstack  |
-| **Lara Strutz Carvalho**          | Desenvolvedor Fullstack  |
+| **Lara Strutz Carvalho**          | Desenvolvedor Frontend  |
 | **João Paulo Gonçalves da Silva** | Desenvolvedor Backend    |
 | **Yan Adriel Martins Silva**      | Desenvolvedor Fullstack  |
 
@@ -30,6 +30,117 @@ A plataforma automatiza processos burocráticos, permitindo o controle eficiente
 - **Backend:** Node.js com Express
 - **Banco de Dados:** MongoDB
 - **Inteligência Artificial (Auxílio ao Desenvolvimento):** Gemini, Claude Code e ChatGPT
+
+---
+
+## 🧭 Documentação Preliminar do Sistema
+
+### Arquitetura em camadas
+
+```mermaid
+flowchart TB
+	Client[Cliente HTTP]
+	Express[app.js / Express]
+	Middlewares[Middlewares globais\ncors, cookieParser, helmet, json, urlencoded, morgan]
+	Routes[Router principal\n/sgla-api]
+	Controllers[Controllers]
+	Services[Services]
+	Models[Models / Schemas MongoDB]
+	External[Serviços externos\nCloudinary, Google Calendar, Mail, MongoDB]
+
+	Client --> Express
+	Express --> Middlewares --> Routes
+	Routes --> Controllers --> Services --> Models --> External
+	Services --> External
+```
+
+### Modelo de domínio principal
+
+```mermaid
+classDiagram
+direction LR
+
+class User
+class University
+class AcademicLeague
+class Squad
+class LeagueMembership
+class Event
+class Attendance
+class Certificate
+class Task
+class Role
+class Permission
+class UserPermission
+
+University "1" --> "0..*" AcademicLeague : hosts
+AcademicLeague "1" --> "0..*" Squad : contains
+AcademicLeague "1" --> "0..*" Event : schedules
+AcademicLeague "1" --> "0..*" LeagueMembership : registers
+User "1" --> "0..*" LeagueMembership : participates
+User "1" --> "0..*" Task : assignedTo / assignedBy
+LeagueMembership "1" --> "0..*" Attendance : records
+LeagueMembership "1" --> "0..*" Certificate : certificates
+Role "0..*" -- "0..*" Permission : grants
+UserPermission "0..*" -- "0..*" Role : assigns
+UserPermission "0..*" -- "0..*" Permission : overrides
+```
+
+### O que este backend cobre
+
+- Autenticação com login, logout, refresh e recuperação de senha.
+- Gestão de usuários, universidades, ligas acadêmicas e subequipes.
+- Gestão de eventos, presenças, certificados e tarefas.
+- Regras de autorização por papéis e permissões.
+- Integração com Google Calendar, Cloudinary e e-mail.
+
+### Estrutura útil para documentação
+
+- `src/app.js` concentra o pipeline do Express.
+- `src/routes/index.js` agrega as rotas principais do sistema.
+- `src/controllers/` concentra a orquestração dos endpoints.
+- `src/services/` concentra regra de negócio e integrações.
+- `src/models/` define a estrutura persistida no MongoDB.
+
+### Execução local
+
+1. Instale as dependências do projeto.
+2. Configure `.env.development` com as credenciais e URLs.
+3. Garanta acesso ao MongoDB.
+4. Execute `npm run dev`.
+
+### Variáveis de ambiente mais relevantes
+
+- `PORT`
+- `NODE_ENV`
+- `FRONTEND_URL`
+- `ALLOWED_ORIGINS`
+- `COOKIE_SECRET`
+- `MONGO_USER`
+- `MONGO_PASS`
+- `MONGO_SERVER`
+- `MONGO_DATABASE`
+- `ACCESS_TOKEN_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- `PASSWORD_TOKEN_SECRET`
+- `EMAIL_TOKEN_SECRET`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+### Scripts úteis
+
+```bash
+npm run dev
+npm run dev:vercel
+npm run prod
+npm start
+npm run lint
+npm run lint:fix
+```
 
 ---
 
@@ -66,6 +177,15 @@ O desenvolvimento deste sistema é guiado pelas seguintes necessidades de seus d
 
 ---
 
+## 📚 Referências Técnicas
+
+- [UML do backend](docs/backend-uml.md)
+- [Ponto de entrada da aplicação](src/index.js)
+- [Configuração do Express](src/app.js)
+- [Agrupamento de rotas](src/routes/index.js)
+
+---
+
 ## 🚀 Como executar o projeto localmente
 
-_(Em breve: Instruções passo a passo de como instalar as dependências, configurar as variáveis de ambiente `.env` e rodar os servidores Frontend e Backend localmente)._
+Use as instruções da seção de documentação preliminar acima.
