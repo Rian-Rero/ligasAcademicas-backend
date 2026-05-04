@@ -1,4 +1,3 @@
-import PermissionModel from '../../models/PermissionModel.js';
 import * as PermissionService from '../../services/PermissionService.js';
 import * as RoleService from '../../services/RoleService.js';
 import logger from '../../config/logger.js';
@@ -8,24 +7,11 @@ import logger from '../../config/logger.js';
  */
 export const seedSystemPermissionsAndRoles = async () => {
   try {
-    // Verificar se já existe alguma permissão de sistema
-    const existingSystemPermission = await PermissionModel.findOne({
-      isSystem: true,
-    })
-      .lean()
-      .exec();
-
     logger.info('Starting seed/sync of system permissions and roles...');
 
-    if (!existingSystemPermission) {
-      // Seed permissões apenas na primeira inicialização
-      await PermissionService.seedSystemPermissions();
-      logger.info('✅ System permissions seeded successfully');
-    } else {
-      logger.info('System permissions already seeded, skipping permissions');
-    }
+    await PermissionService.seedSystemPermissions();
+    logger.info('✅ System permissions ensured/seeded');
 
-    // Sempre sincroniza papéis de sistema (admin/manager)
     await RoleService.seedSystemRoles();
     logger.info('✅ System roles synced successfully');
 
@@ -34,6 +20,5 @@ export const seedSystemPermissionsAndRoles = async () => {
     logger.error(
       `Error during seed of system permissions and roles: ${error.message}`,
     );
-    // Não lançar erro para não quebrar a inicialização da app
   }
 };
