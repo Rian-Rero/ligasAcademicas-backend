@@ -18,7 +18,7 @@ A plataforma automatiza processos burocráticos, permitindo o controle eficiente
 | Nome                              | Papel / Responsabilidade |
 | :-------------------------------- | :----------------------- |
 | **Rian Rero Lopes Jericó Vieira** | Desenvolvedor Fullstack  |
-| **Lara Strutz Carvalho**          | Desenvolvedor Frontend  |
+| **Lara Strutz Carvalho**          | Desenvolvedor Frontend   |
 | **João Paulo Gonçalves da Silva** | Desenvolvedor Backend    |
 | **Yan Adriel Martins Silva**      | Desenvolvedor Fullstack  |
 
@@ -104,10 +104,10 @@ UserPermission "0..*" -- "0..*" Permission : overrides
 
 ### Execução local
 
-1. Instale as dependências do projeto.
+1. Instale as dependências do projeto com `yarn`.
 2. Configure `.env.development` com as credenciais e URLs.
 3. Garanta acesso ao MongoDB.
-4. Execute `npm run dev`.
+4. Execute `yarn dev`.
 
 ### Variáveis de ambiente mais relevantes
 
@@ -134,12 +134,13 @@ UserPermission "0..*" -- "0..*" Permission : overrides
 ### Scripts úteis
 
 ```bash
-npm run dev
-npm run dev:vercel
-npm run prod
-npm start
-npm run lint
-npm run lint:fix
+yarn dev
+yarn dev:vercel
+yarn prod
+yarn start
+yarn lint
+yarn lint:fix
+yarn install
 ```
 
 ---
