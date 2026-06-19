@@ -17,7 +17,15 @@ export default [
     rules: {
       'no-underscore-dangle': 0,
       'func-names': ['error', 'never'],
-      'no-unused-vars': 2,
+      'no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ];
