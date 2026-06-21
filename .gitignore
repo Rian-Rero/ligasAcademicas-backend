@@ -14,6 +14,9 @@ node_modules
 .env.development
 .env.production
 
+# Test coverage reports
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
