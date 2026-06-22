@@ -6,6 +6,7 @@ import {
 } from '../../../errors/baseErrors.js';
 import UserSessionTokenModel from '../../../models/UserSessionTokenModel.js';
 import * as SessionService from '../../../services/SessionService.js';
+import { signSessionJwts } from '../../../utils/libs/jwt.js';
 import { createUser } from '../../helpers/factories.js';
 
 describe('SessionService.processLogin', () => {
@@ -146,6 +147,65 @@ describe('SessionService.processRefreshToken', () => {
 
     await expect(
       SessionService.processRefreshToken(refreshToken),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it('clears all user tokens when reuse attack is detected and hacked user exists', async () => {
+    const user = await createUser({
+      email: 'reuse3@test.com',
+      password: 'Password@1',
+      emailVerified: true,
+    });
+    const { refreshToken } = await SessionService.processLogin({
+      email: 'reuse3@test.com',
+      password: 'Password@1',
+    });
+
+    // Add a second token for the same user
+    await UserSessionTokenModel.create({
+      user: user._id,
+      token: 'another-valid-token',
+      expiresAt: new Date(Date.now() + 86400000),
+    });
+
+    // Remove the specific token we'll use to simulate it being reused
+    await UserSessionTokenModel.deleteOne({ token: refreshToken });
+
+    await expect(
+      SessionService.processRefreshToken(refreshToken),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    // All tokens for this user should be cleared
+    const remaining = await UserSessionTokenModel.find({ user: user._id });
+    expect(remaining).toHaveLength(0);
+  });
+
+  it('throws ForbiddenError when the userId in the JWT does not match the stored token user (tampered token)', async () => {
+    const realUser = await createUser({
+      email: 'tampered@test.com',
+      password: 'Password@1',
+      emailVerified: true,
+    });
+    const otherUser = await createUser({
+      email: 'other-tampered@test.com',
+      password: 'Password@1',
+      emailVerified: true,
+    });
+
+    // Sign a JWT claiming to be otherUser
+    const { refreshToken: tamperedToken } = signSessionJwts({
+      _id: otherUser._id.toString(),
+    });
+
+    // But store it in DB associated with realUser
+    await UserSessionTokenModel.create({
+      user: realUser._id,
+      token: tamperedToken,
+      expiresAt: new Date(Date.now() + 86400000),
+    });
+
+    await expect(
+      SessionService.processRefreshToken(tamperedToken),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
